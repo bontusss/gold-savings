@@ -1,0 +1,33 @@
+version: '3'
+
+services:
+  goldsavings-api:
+    container_name: goldsavings_api
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "9000:9000"
+    depends_on:
+      - redis
+    networks:
+      - gold-savings-network
+
+  redis:
+    container_name: goldsavings_redis
+    image: redis:alpine
+    ports:
+      - "6379:6379"
+    command: redis-server --appendonly yes --protected-mode no  # Disable protected mode for Docker network access
+    volumes:
+      - redis_data:/data
+    restart: unless-stopped
+    networks:
+      - goldsavings-network
+
+volumes:
+  redis_data:
+
+networks:
+  goldsavings-network:
+    driver: bridge

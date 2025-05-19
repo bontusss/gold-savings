@@ -1,0 +1,115 @@
+package components
+
+import (
+    db "gold-savings/db/sqlc"
+)
+
+templ ListUsers(title string, users []db.User) {
+    <!-- Start::row-3 -->
+                    <div class="grid grid-cols-12 gap-x-6">
+                        <div class="col-span-12">
+                            <div class="box orders-table">
+                                <div class="box-header">
+                                    <div class="sm:flex justify-between sm:space-y-0 space-y-2">
+                                        <h5 class="box-title my-auto">Users</h5>
+                                        <div class="hs-dropdown ti-dropdown block ltr:ml-auto rtl:mr-auto my-auto">
+                                            <button id="hs-dropdown-custom-icon-trigger" type="button"
+                                                class="hs-dropdown-toggle px-2 py-1 ti-btn ti-btn-primary">Sort
+                                                By<i class="ri-arrow-down-s-line align-middle"></i></button>
+                                            <div class="hs-dropdown-menu ti-dropdown-menu"
+                                                aria-labelledby="hs-dropdown-custom-icon-trigger">
+                                                <a class="ti-dropdown-item" href="javascript:void(0)">New</a>
+                                                <a class="ti-dropdown-item" href="javascript:void(0)">popular</a>
+                                                <a class="ti-dropdown-item" href="javascript:void(0)">Relevant</a>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="box-body">
+                                    <div class="table-bordered rounded-sm overflow-auto">
+                                        <table class="ti-custom-table ti-custom-table-head">
+                                            <thead class="">
+                                                <tr>
+                                                    <th scope="col">First Name</th>
+                                                    <th scope="col">Last Name</th>
+                                                    <th scope="col">Status</th>
+                                                    <th scope="col">Email</th>
+                                                    <th scope="col">Phone</th>
+                                                    <th scope="col">Date</th>
+                                                    <th scope="col">Action</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                if len(users) == 0 {
+                                                    <tr>
+                                                        <td colspan="7" class="text-center text-gray-500">No users yet</td>
+                                                    </tr>
+                                                } else {
+                                                    for _, user := range users{
+                                                        <tr>
+                                                            <td>
+                                                                {user.FirstName}
+                                                            </td>
+                                                            <td>{user.LastName}</td>
+                                                            <td><span
+                                                                    class="badge bg-primary/10 text-primary leading-none rounded-sm text-xs py-1">
+                                                                    active</span></td>
+                                                            <td>{user.Email}</td>
+                                                            <td>{user.Phone}</td>
+                                                            <td>
+                                                                <div class="inline-flex items-center">
+                                                                    <i
+                                                                        class="ri-map-pin-fill text-gray-500 dark:text-white/70 text-xs"></i>
+                                                                    <span class="ltr:ml-1 rtl:mr-1">Date here</span>
+                                                                </div>
+                                                            </td>
+                                                            <td>
+                                                                <div
+                                                                    class="flex items-center flex-row self-stretch gap-2 text-base">
+                                                                    <a aria-label="anchor" href="javascript:void(0);"
+                                                                        class="ti-btn ti-btn-soft-success py-1 px-2"><i
+                                                                            class="ri-download-2-line"></i></a>
+                                                                    <a aria-label="anchor" href="javascript:void(0);"
+                                                                        class="ti-btn ti-btn-soft-primary py-1 px-2"><i
+                                                                            class="ri-edit-line"></i></a>
+                                                                </div>
+                                                            </td>
+                                                        </tr>
+                                                    }
+                                                }
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                                <div class="box-footer">
+                                    <div class="sm:flex sm:space-y-0 space-y-2 items-center">
+                                        <div class="">
+                                            showing 5 Entries <i class="ri-arrow-right-line ml-2 font-semibold"></i>
+                                        </div>
+                                        <div class="ltr:ml-auto rtl:mr-auto">
+                                            <nav class="flex justify-center items-center space-x-2 rtl:space-x-reverse">
+                                                <a class="text-gray-500 hover:text-primary e py-1 px-2 leading-none inline-flex items-center gap-2 rounded-sm"
+                                                    href="javascript:void(0);">
+                                                    <span aria-hidden="true">Prev</span>
+                                                    <span class="sr-only">Previous</span>
+                                                </a>
+                                                <a class="bg-primary text-white py-1 px-2 leading-none inline-flex items-center text-sm font-medium rounded-sm"
+                                                    href="javascript:void(0);" aria-current="page">1</a>
+                                                <a class="text-gray-500 hover:text-primary e py-1 px-2 leading-none inline-flex items-center text-sm font-medium rounded-sm"
+                                                    href="javascript:void(0);">2</a>
+                                                <a class="text-gray-500 hover:text-primary e py-1 px-2 leading-none inline-flex items-center text-sm font-medium rounded-sm"
+                                                    href="javascript:void(0);">3</a>
+                                                <a class="text-gray-500 hover:text-primary e py-1 px-2 leading-none inline-flex items-center gap-2 rounded-sm"
+                                                    href="javascript:void(0);">
+                                                    <span class="sr-only">Next</span>
+                                                    <span aria-hidden="true">Next</span>
+                                                </a>
+                                            </nav>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- End::row-3 -->
+}

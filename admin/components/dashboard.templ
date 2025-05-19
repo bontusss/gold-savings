@@ -1,0 +1,90 @@
+package components
+
+templ Dashboard(title string) {
+	@Base(title) {
+		<div class="min-h-screen" x-data="{ open: false }">
+			<!-- Sidebar -->
+			<div class="bg-gray-800 text-white w-64 space-y-6 py-7 px-2 fixed inset-y-0 left-0 transform -translate-x-full md:translate-x-0 transition duration-200 ease-in-out">
+				<div class="flex items-center space-x-2 px-4">
+					<h1 class="text-2xl font-bold">Gold Savings</h1>
+				</div>
+				<nav>
+					<a href="/admin/dashboard" class="block py-2.5 px-4 rounded transition duration-200 hover:bg-gray-700">
+						Dashboard
+					</a>
+					<button
+						hx-get="/admin/api/data"
+						hx-target="#content"
+						class="block py-2.5 px-4 rounded transition duration-200 hover:bg-gray-700 w-full text-left"
+					>
+						Load Data
+					</button>
+					<button
+						hx-get="/admin/api/users"
+						hx-target="#content"
+						class="block py-2.5 px-4 rounded transition duration-200 hover:bg-gray-700 w-full text-left"
+					>
+						Users
+					</button>
+					<button
+						hx-post="/admin/logout"
+						class="block py-2.5 px-4 rounded transition duration-200 hover:bg-gray-700 w-full text-left"
+					>
+						Logout
+					</button>
+				</nav>
+			</div>
+
+			<!-- Main content -->
+			<div class="md:ml-64">
+				<!-- Mobile sidebar button -->
+				<button @click="open = !open" class="md:hidden fixed top-4 left-4 z-50 p-2 rounded-md text-gray-700 hover:bg-gray-100">
+					<svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+					</svg>
+				</button>
+
+				<!-- Mobile sidebar overlay -->
+				<div x-show="open" @click="open = false" class="fixed inset-0 bg-black bg-opacity-50 z-40 md:hidden"></div>
+
+				<!-- Mobile sidebar -->
+				<div
+					x-show="open"
+					@click.away="open = false"
+					class="fixed inset-y-0 left-0 bg-gray-800 text-white w-64 space-y-6 py-7 px-2 z-50 transform transition duration-200 ease-in-out"
+					:class="{'translate-x-0': open, '-translate-x-full': !open}"
+				>
+					<div class="flex items-center space-x-2 px-4">
+						<h1 class="text-2xl font-bold">Admin Panel</h1>
+					</div>
+					<nav>
+						<a href="/admin/dashboard" class="block py-2.5 px-4 rounded transition duration-200 hover:bg-gray-700">
+							Dashboard
+						</a>
+						<button
+							hx-get="/admin/api/data"
+							hx-target="#content"
+							class="block py-2.5 px-4 rounded transition duration-200 hover:bg-gray-700 w-full text-left"
+						>
+							Load Data
+						</button>
+						<button
+							hx-post="/admin/logout"
+							class="block py-2.5 px-4 rounded transition duration-200 hover:bg-gray-700 w-full text-left"
+						>
+							Logout
+						</button>
+					</nav>
+				</div>
+
+				<!-- Content area -->
+				<main class="p-8">
+					<div id="content" class="bg-white rounded-lg shadow p-6">
+						<h2 class="text-xl font-semibold mb-4">Welcome to the Admin Dashboard</h2>
+						<p class="text-gray-600">Click "Load Data" to fetch protected data from the server.</p>
+					</div>
+				</main>
+			</div>
+		</div>
+	}
+}
