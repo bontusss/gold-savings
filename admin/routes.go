@@ -10,15 +10,16 @@ import (
 	"gold-savings/admin/middleware"
 	db "gold-savings/db/sqlc"
 	"gold-savings/internal/auth"
+	"gold-savings/internal/services"
 
 	"github.com/gin-gonic/gin"
 )
 
 // routes TODO:
 
-func SetupRoutes(router *gin.RouterGroup, authService *auth.Service, queries *db.Queries) {
+func SetupRoutes(router *gin.RouterGroup, authService *auth.Service, queries *db.Queries, admin *services.Admin) {
 	authHandler := handlers.NewAuthHandler(authService)
-	dashboardHandler := handlers.NewDashboardHandler(authService, queries)
+	dashboardHandler := handlers.NewDashboardHandler(authService, queries, admin)
 
 	// Auth routes
 	router.GET("/login", authHandler.ShowLogin)
@@ -26,6 +27,9 @@ func SetupRoutes(router *gin.RouterGroup, authService *auth.Service, queries *db
 	router.GET("/register", authHandler.ShowRegister)
 	router.POST("/register", authHandler.Register)
 	router.POST("/logout", authHandler.Logout)
+	// delete after test
+	router.POST("/api/plan", dashboardHandler.CreateInvestmentPlan)
+
 
 	// Protected routes
 	protected := router.Group("/")
@@ -34,5 +38,7 @@ func SetupRoutes(router *gin.RouterGroup, authService *auth.Service, queries *db
 		protected.GET("/dashboard", dashboardHandler.ShowDashboard)
 		protected.GET("/api/data", dashboardHandler.GetData)
 		protected.GET("/api/users", dashboardHandler.ListUsers)
+		protected.GET("/api/plan", dashboardHandler.ShowCreatePlan)
+		// protected.POST("/api/plan", dashboardHandler.CreateInvestmentPlan)
 	}
 }

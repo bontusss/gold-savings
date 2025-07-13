@@ -1,3 +1,16 @@
+run:
+	templ generate --watch --proxy="http://localhost:9000" --cmd="go run ."
+start:
+	templ generate
+	air \
+		--build.cmd "go build -o bin/app" \
+		--build.bin "./bin/app" \
+		--build.exclude_dir "vendor" \
+		--build.exclude_dir "static" \
+		--build.include_ext "go" \
+		--build.kill_delay "0.5s" \
+		--build.poll "2s"
+
 c_m: # create-migration: create migration of name=<migration_name>
 	migrate create -ext sql -dir db/migrations -seq $(name)
 
@@ -32,11 +45,11 @@ m_down: # migrate-down
 
 # Start services - PostgreSQL | Bitgo | Redis containers in detached mode
 s_up: #
-	docker-compose -f docker-compose.services.yml up -d
+	docker compose -f docker-compose.services.yml up -d
 
 # Stop and remove services - PostgreSQL | Bitgo | Redis container
 s_down: #
-	docker-compose -f docker-compose.services.yml down
+	docker compose -f docker-compose.services.yml down
 
 container_name ?= goldsavings_postgres
 

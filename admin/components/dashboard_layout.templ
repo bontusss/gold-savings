@@ -1,6 +1,6 @@
 package components
 
-templ DashboardT(activeUsersCount int64, totalAmountInAllSavings float64) {
+templ DashboardT(activeUsersCount int64) {
 	@Base("Gold Savings - Dashboard") {
 	    <aside class="app-sidebar" id="sidebar">
 
@@ -50,13 +50,13 @@ templ DashboardT(activeUsersCount int64, totalAmountInAllSavings float64) {
                             <li class="slide has-sub">
                                 <a href="javascript:void(0);" class="side-menu__item">
                                     <i class="ri-inbox-line side-menu__icon"></i>
-                                    <span class="side-menu__label">Savings</span>
+                                    <span class="side-menu__label">Plans</span>
                                     <i class="ri ri-arrow-right-s-line side-menu__angle"></i>
                                 </a>
                                 <ul class="slide-menu child1">
                                     <li class="slide side-menu__label1"><a href="javascript:void(0)">List Savings</a></li>
-                                    <li class="slide"><a href="/" class="side-menu__item">Create New Savings</a></li>
-                                    <li class="slide"><a href="/" class="side-menu__item">Update Savings</a></li>
+                                    <li class="slide"><a hx-get="/admin/api/plan" hx-target="#main-content" class="side-menu__item">Create Plan</a></li>
+                                    <li class="slide"><a hx-get="/" class="side-menu__item">Update Savings</a></li>
                                 </ul>
                             </li>
                             <!-- End::slide -->
@@ -373,7 +373,7 @@ templ DashboardT(activeUsersCount int64, totalAmountInAllSavings float64) {
                           </span>
                         </div>
                         <div class="mt-2">
-                          <h2 class="text-2xl font-semibold text-gray-800 dark:text-white">{activeUsersCount}</h2>
+                          <h2 class="text-2xl font-semibold text-gray-800 dark:text-white"></h2>
                           <p class="text-xs text-gray-400 ">in last week</p>
                         </div>
                       </div>
@@ -398,7 +398,7 @@ templ DashboardT(activeUsersCount int64, totalAmountInAllSavings float64) {
                               class="ti ti-trending-up"></i> 1.8%</span>
                         </div>
                         <div class="mt-2">
-                          <h2 class="text-2xl font-semibold text-gray-800 dark:text-white">₦{totalAmountInAllSavings}</h2>
+                          <h2 class="text-2xl font-semibold text-gray-800 dark:text-white">₦</h2>
                           <p class="text-xs text-gray-400 ">in last week</p>
                         </div>
                       </div>

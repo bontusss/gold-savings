@@ -34,7 +34,7 @@ func (h *AuthHandler) Login(c *gin.Context) {
 	email := c.PostForm("email")
 	password := c.PostForm("password")
 
-	token, err := h.authService.Login(c.Request.Context(), email, password)
+	token, _, err := h.authService.LoginAdmin(c.Request.Context(), email, password)
 	if err != nil {
 		err = components.Login("invalid credentials").Render(c, c.Writer)
 		if err != nil {
@@ -44,8 +44,12 @@ func (h *AuthHandler) Login(c *gin.Context) {
 	}
 
 	c.SetCookie("auth_token", token, 3600*24, "/", "", false, true)
-	c.Header("HX-Redirect", "/admin/dashboard") // Add HX-Redirect header for HTMX compatibility
-	c.Redirect(http.StatusFound, "/admin/dashboard")
+	if c.GetHeader("HX-Request") == "true" {
+		c.Header("HX-Redirect", "/admin/dashboard")
+		c.Status(http.StatusOK)
+	} else {
+		c.Redirect(http.StatusFound, "/admin/dashboard")
+	}
 }
 
 func (h *AuthHandler) ShowRegister(c *gin.Context) {

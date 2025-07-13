@@ -6,26 +6,36 @@
 package api
 
 import (
-	"github.com/gin-gonic/gin"
 	"gold-savings/api/handlers"
 	"gold-savings/api/middleware"
+	db "gold-savings/db/sqlc"
 	"gold-savings/internal/auth"
+	"gold-savings/internal/config"
+	"gold-savings/internal/services"
+
+	"github.com/gin-gonic/gin"
 )
 
 // routes TODO:
 
-func SetupRoutes(router *gin.RouterGroup, authService *auth.Service) {
-	authHandler := handlers.NewAuthHandler(authService)
-	dataHandler := handlers.NewDataHandler()
+func SetupRoutes(router *gin.RouterGroup, authService *auth.Service, queries *db.Queries, config *config.Config, userService *services.UserService) {
+	authHandler := handlers.NewAuthHandler(authService, config)
+	userHandler := handlers.NewUserHandler(userService)
 	// Public routes
-	router.GET("/health", dataHandler.HealthCheck)
 	router.POST("/login", authHandler.Login)
 	router.POST("/register", authHandler.Register)
+	router.POST("/verify_email", authHandler.VerifyEmail)
 
 	// Protected routes
 	protected := router.Group("/")
 	protected.Use(middleware.JWTAuthMiddleware(authService))
 	{
-		protected.GET("/data", dataHandler.GetProtectedData)
+		protected.GET("/plans", userHandler.GetAllInvestmentPlans)
+		protected.POST("/savings/payment_request", userHandler.CreateSavingsPaymentRequest)
+		protected.POST("/investment/payment_request", userHandler.CreateInvestmentPaymentRequest)
+		protected.GET("/transactions/savings", userHandler.ListUserSavingsTransactions)
+		protected.GET("/transactions/investment", userHandler.ListUserInvestmentTransactions)
+		protected.POST("/investment", userHandler.CreateInvestment)
+		protected.GET("/investments", userHandler.ListUserInvestments)
 	}
 }

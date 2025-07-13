@@ -33,16 +33,6 @@ func AuthMiddleware(authService *auth.Service) gin.HandlerFunc {
 			return
 		}
 
-		// Check is_admin claim
-		isAdmin, ok := claims["is_admin"].(bool)
-		if !ok || !isAdmin {
-			log.Printf("User is not admin: ok=%v, isAdmin=%v", ok, isAdmin)
-			c.Header("HX-Redirect", "/admin/login")
-			c.Redirect(http.StatusFound, "/admin/login")
-			c.AbortWithStatus(http.StatusForbidden)
-			return
-		}
-
 		// Set user context
 		c.Set("userID", claims["sub"])
 		c.Set("email", claims["email"])

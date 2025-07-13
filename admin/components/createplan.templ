@@ -1,0 +1,62 @@
+package components
+
+templ CreatePlan() {
+<div class="grid grid-cols-6 gap-x-6">
+  <div class="col-span-12 xxl:col-span-6">
+    <div class="box">
+      <div class="box-header">
+        <h5 class="box-title text-center">Create a Plan</h5>
+      </div>
+      <div class="box-body">
+        <form hx-post="/admin/api/plan" hx-on="htmx:afterRequest: this.reset()" class="space-y-3">
+          <div class="sm:grid grid-cols-12 gap-x-6">
+            <label class="col-span-3 ti-form-label">Name</label>
+            <input type="text" name="name" class="col-span-9 ti-form-input" placeholder="Premium" required>
+          </div>
+          <div class="sm:grid grid-cols-12 gap-x-6">
+            <label class="col-span-3 ti-form-label">Minimum amount</label>
+            <input type="text" name="minAmount" class="col-span-9 ti-form-input"
+              placeholder="The least expected amount" required>
+          </div>
+          <div class="sm:grid grid-cols-12 gap-x-6">
+            <label class="col-span-3 ti-form-label">Maximum amount</label>
+            <input type="text" name="maxAmount" class="col-span-9 ti-form-input"
+              placeholder="The highest amount for this plan" required>
+          </div>
+          <div class="sm:grid grid-cols-12 gap-x-6">
+            <label class="col-span-3 ti-form-label">Interest Rate</label>
+            <input type="text" name="interestRate" class="col-span-9 ti-form-input"
+              placeholder="10 for 10%, 30 for 30%" required>
+          </div>
+          <div class="sm:grid grid-cols-12 gap-x-6">
+            <label class="col-span-3 ti-form-label">Withdrawal Frequency</label>
+            <select name="withdrawalFrequency" class="col-span-9 ti-form-input" required>
+              <option value="daily">Daily</option>
+              <option value="weekly">Weekly</option>
+              <option value="monthly">Monthly</option>
+              <option value="quarterly">Quarterly</option>
+              <option value="yearly">Yearly</option>
+            </select>
+          </div>
+          <div class="sm:grid grid-cols-12 gap-x-6">
+            <label class="col-span-3 ti-form-label">Maturity Period</label>
+            <select name="maturityPeriod" class="col-span-9 ti-form-input" required>
+              <option value="1">1 Year</option>
+              <option value="6">6 Months</option>
+              <option value="3">3 Months</option>
+            </select>
+          </div>
+
+
+          <div class="grid grid-cols-12 gap-x-6">
+            <div class="col-span-3"> </div>
+            <div class="col-span-9">
+              <button type="submit" class="ti-btn ti-btn-primary">Submit</button>
+            </div>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+}

@@ -21,47 +21,31 @@ import (
 type DashboardHandler struct {
 	authService *auth.Service
 	queries     *db.Queries
-	savings     *services.Savings
+	admin       *services.Admin
 }
 
-func NewDashboardHandler(authService *auth.Service, queries *db.Queries) *DashboardHandler {
-	return &DashboardHandler{authService: authService, queries: queries}
+var serverError = "an error occurred, try again"
+
+func NewDashboardHandler(authService *auth.Service, queries *db.Queries, admin *services.Admin) *DashboardHandler {
+	return &DashboardHandler{authService: authService, queries: queries, admin: admin}
 }
 
 func (h *DashboardHandler) ShowDashboard(c *gin.Context) {
-	token, err := c.Cookie("auth_token")
-	if err != nil {
-		c.Redirect(http.StatusFound, "/admin/login")
-		return
-	}
 
-	claims, err := h.authService.ValidateToken(token)
-	if err != nil {
-		// Log the error for debugging
-		c.String(http.StatusUnauthorized, "Token validation failed: %v", err)
-		c.Redirect(http.StatusFound, "/admin/login")
-		return
-	}
-
-	// Example usage of claims (e.g., logging user email)
-	if email, ok := claims["email"].(string); ok {
-		c.Set("user_email", email)
-	}
-
-	activeUsersCount, err := h.queries.CountActiveNonAdminUsers(c)
-	if err != nil {
-		log.Printf("error getting active users count: %v", err)
-		c.String(500, "error fetching active user count")
-		return
-	}
-	totalAmountInAllActiveSavings, err := h.queries.SumActiveSavingsPlans(c)
+	activeUsersCount, err := h.queries.CountActiveUsers(c)
 	if err != nil {
 		log.Printf("error getting active users count: %v", err)
 		c.String(500, "error fetching active user count")
 		return
 	}
 
-	err = components.DashboardT(activeUsersCount, totalAmountInAllActiveSavings).Render(c, c.Writer)
+	if err != nil {
+		log.Printf("error getting active users count: %v", err)
+		c.String(500, "error fetching active user count")
+		return
+	}
+
+	err = components.DashboardT(activeUsersCount).Render(c, c.Writer)
 	if err != nil {
 		c.String(http.StatusInternalServerError, "Error rendering dashboard page")
 		return
@@ -95,27 +79,27 @@ func (h *DashboardHandler) ListUsers(c *gin.Context) {
 	}
 }
 
-func (h *DashboardHandler) ListSavingPlans(c *gin.Context) {
-	_, err := h.savings.ListAllSavingsPlans(c)
+func (h *DashboardHandler) ShowCreatePlan(c *gin.Context) {
+	err := components.CreatePlan().Render(c, c.Writer)
 	if err != nil {
-		c.String(http.StatusInternalServerError, "Error fetching savings plans")
+		log.Printf("Error rendering create plan template: %v", err)
+		c.String(http.StatusInternalServerError, "Error rendering create plans page")
 		return
 	}
-
-	//	todo: create and render the list in dashboard
 }
 
-//func (h *DashboardHandler) GetActiveUsersCount(c *gin.Context) {
-//	activeUsersCount, err := h.queries.CountActiveNonAdminUsers(c)
-//	if err != nil {
-//		log.Printf("error getting active users count: %v", err)
-//		c.String(500, "error fetching active user count")
-//		return
-//	}
-//
-//	err = components.DashboardT(activeUsersCount).Render(c, c.Writer)
-//	if err != nil {
-//		c.String(http.StatusInternalServerError, "Error rendering dashboard")
-//		return
-//	}
-//}
+func (h *DashboardHandler) CreateInvestmentPlan (c *gin.Context) {
+	var req db.CreateInvestmentPlanParams
+	if err := c.ShouldBindJSON(&req); err != nil {
+		log.Printf("create plan request error: %v", err)
+		c.JSON(400, serverError)
+		return
+	}
+	_, err := h.admin.CreateInvestmentPlan(c, req.Name, req.InterestRate, req.MinAmount, req.MaxAmount)
+	if err != nil {
+		log.Printf("error creating plan: %v", err)
+		c.JSON(500, serverError)
+		return
+	}
+	c.JSON(200, "plan created")
+}

@@ -7,25 +7,27 @@ package config
 
 import (
 	"fmt"
-	"github.com/spf13/viper"
 	"log"
+
+	"github.com/spf13/viper"
 )
 
 // config TODO:
 
 type Config struct {
-	DBUsername    string `mapstructure:"DB_USERNAME"`
-	DBPassword    string `mapstructure:"DB_PASSWORD"`
-	DBHost        string `mapstructure:"DB_HOST"`
-	DBPort        string `mapstructure:"DB_PORT"`
-	DBDriver      string `mapstructure:"DB_DRIVER"`
-	DBName        string `mapstructure:"DB_NAME"`
-	SSLMode       string `mapstructure:"SSLMODE"`
-	ServerPort    int    `mapstructure:"SERVER_PORT"`
-	RedisHost     string `mapstructure:"REDIS_HOST"`
-	RedisPort     string `mapstructure:"REDIS_PORT"`
-	RedisPassword string
-	JwtSecret     string `mapstructure:"JWT_SECRET"`
+	DBUsername     string `mapstructure:"DB_USERNAME"`
+	DBPassword     string `mapstructure:"DB_PASSWORD"`
+	DBHost         string `mapstructure:"DB_HOST"`
+	DBPort         string `mapstructure:"DB_PORT"`
+	DBDriver       string `mapstructure:"DB_DRIVER"`
+	DBName         string `mapstructure:"DB_NAME"`
+	SSLMode        string `mapstructure:"SSLMODE"`
+	ServerPort     int    `mapstructure:"SERVER_PORT"`
+	JwtSecret      string `mapstructure:"JWT_SECRET"`
+	AdminEmail     string `mapstructure:"ADMIN_EMAIL"`
+	AdminPassword  string `mapstructure:"ADMIN_PASSWORD"`
+	PlunkBaseUrl   string `mapstructure:"PLUNK_BASE_URL"`
+	PlunkSecretKey string `mapstructure:"PLUNK_SECRET_KEY"`
 }
 
 func LoadConfig(path string) (*Config, error) {
@@ -60,9 +62,10 @@ func LoadConfig(path string) (*Config, error) {
 	_ = v.BindEnv("SSLMODE")
 	_ = v.BindEnv("DB_DRIVER")
 	_ = v.BindEnv("SERVER_PORT")
-	_ = v.BindEnv("REDIS_HOST")
-	_ = v.BindEnv("REDIS_PORT")
-	_ = v.BindEnv("REDIS_PASSWORD")
+	_ = v.BindEnv("ADMIN_EMAIL")
+	_ = v.BindEnv("ADMIN_PASSWORD")
+	_ = v.BindEnv("PLUNK_BASE_URL")
+	_ = v.BindEnv("PLUNK_SECRET_KEY")
 
 	// Create config struct
 	var config Config

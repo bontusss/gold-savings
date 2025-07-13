@@ -11,6 +11,7 @@ import (
 	"gold-savings/internal/auth"
 	"gold-savings/internal/config"
 	p "gold-savings/internal/db"
+	"gold-savings/internal/services"
 	"log"
 
 	"github.com/gin-gonic/gin"
@@ -54,6 +55,8 @@ func main() {
 	queries := db.New(dbConn)
 
 	authService := auth.NewAuthService(queries, c)
+	adminService := services.NewAdminService(queries)
+	userService := services.NewUserService(queries)
 
 	// Create a Gin router
 	router := gin.Default()
@@ -68,10 +71,10 @@ func main() {
 	})
 
 	// Initialize API routes
-	api.SetupRoutes(router.Group("/api"), authService)
+	api.SetupRoutes(router.Group("/api"), authService, queries, c, userService)
 
 	// Initialize Admin routes
-	admin.SetupRoutes(router.Group("/admin"), authService, queries)
+	admin.SetupRoutes(router.Group("/admin"), authService, queries, adminService)
 
 	port := c.ServerPort
 	log.Printf("Server running on port %v", port)

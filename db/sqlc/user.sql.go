@@ -12,62 +12,84 @@ import (
 	"github.com/google/uuid"
 )
 
-const countActiveNonAdminUsers = `-- name: CountActiveNonAdminUsers :one
+const countActiveUsers = `-- name: CountActiveUsers :one
 SELECT COUNT(*)
 FROM users
-WHERE is_active = TRUE AND is_admin = FALSE
+WHERE is_active = TRUE
 `
 
-func (q *Queries) CountActiveNonAdminUsers(ctx context.Context) (int64, error) {
-	row := q.db.QueryRowContext(ctx, countActiveNonAdminUsers)
+func (q *Queries) CountActiveUsers(ctx context.Context) (int64, error) {
+	row := q.db.QueryRowContext(ctx, countActiveUsers)
 	var count int64
 	err := row.Scan(&count)
 	return count, err
 }
 
-const createAdminUser = `-- name: CreateAdminUser :one
-INSERT INTO users (email, password_hash, is_admin, first_name, last_name, phone)
-VALUES ($1, $2, $3, $4, $5, $6)
-RETURNING id, email, is_admin, created_at
+const createUser = `-- name: CreateUser :one
+INSERT INTO users (email, password_hash, username, phone, reference_id)
+VALUES ($1, $2, $3, $4, $5)
+RETURNING id, username, email, phone, total_savings, total_withdrawn, reference_id, password_hash, account_number, bank_name, token_balance, is_active, email_verified, verification_code, verification_expires_at, created_at, updated_at
 `
 
-type CreateAdminUserParams struct {
-	Email        string       `json:"email"`
-	PasswordHash string       `json:"password_hash"`
-	IsAdmin      sql.NullBool `json:"is_admin"`
-	FirstName    string       `json:"first_name"`
-	LastName     string       `json:"last_name"`
-	Phone        string       `json:"phone"`
+type CreateUserParams struct {
+	Email        string `json:"email"`
+	PasswordHash string `json:"password_hash"`
+	Username     string `json:"username"`
+	Phone        string `json:"phone"`
+	ReferenceID  string `json:"reference_id"`
 }
 
-type CreateAdminUserRow struct {
-	ID        uuid.UUID    `json:"id"`
-	Email     string       `json:"email"`
-	IsAdmin   sql.NullBool `json:"is_admin"`
-	CreatedAt sql.NullTime `json:"created_at"`
-}
-
-func (q *Queries) CreateAdminUser(ctx context.Context, arg CreateAdminUserParams) (CreateAdminUserRow, error) {
-	row := q.db.QueryRowContext(ctx, createAdminUser,
+func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (User, error) {
+	row := q.db.QueryRowContext(ctx, createUser,
 		arg.Email,
 		arg.PasswordHash,
-		arg.IsAdmin,
-		arg.FirstName,
-		arg.LastName,
+		arg.Username,
 		arg.Phone,
+		arg.ReferenceID,
 	)
-	var i CreateAdminUserRow
+	var i User
 	err := row.Scan(
 		&i.ID,
+		&i.Username,
 		&i.Email,
-		&i.IsAdmin,
+		&i.Phone,
+		&i.TotalSavings,
+		&i.TotalWithdrawn,
+		&i.ReferenceID,
+		&i.PasswordHash,
+		&i.AccountNumber,
+		&i.BankName,
+		&i.TokenBalance,
+		&i.IsActive,
+		&i.EmailVerified,
+		&i.VerificationCode,
+		&i.VerificationExpiresAt,
 		&i.CreatedAt,
+		&i.UpdatedAt,
 	)
 	return i, err
 }
 
+const deleteUserByID = `-- name: DeleteUserByID :exec
+DELETE FROM users WHERE id = $1
+`
+
+func (q *Queries) DeleteUserByID(ctx context.Context, id uuid.UUID) error {
+	_, err := q.db.ExecContext(ctx, deleteUserByID, id)
+	return err
+}
+
+const deleteUsers = `-- name: DeleteUsers :exec
+DELETE FROM users
+`
+
+func (q *Queries) DeleteUsers(ctx context.Context) error {
+	_, err := q.db.ExecContext(ctx, deleteUsers)
+	return err
+}
+
 const getUser = `-- name: GetUser :one
-SELECT id, first_name, last_name, email, phone, password_hash, account_number, bank_name, token_balance, is_active, is_admin, created_at, updated_at FROM users WHERE id = $1 LIMIT 1
+SELECT id, username, email, phone, total_savings, total_withdrawn, reference_id, password_hash, account_number, bank_name, token_balance, is_active, email_verified, verification_code, verification_expires_at, created_at, updated_at FROM users WHERE id = $1 LIMIT 1
 `
 
 func (q *Queries) GetUser(ctx context.Context, id uuid.UUID) (User, error) {
@@ -75,16 +97,20 @@ func (q *Queries) GetUser(ctx context.Context, id uuid.UUID) (User, error) {
 	var i User
 	err := row.Scan(
 		&i.ID,
-		&i.FirstName,
-		&i.LastName,
+		&i.Username,
 		&i.Email,
 		&i.Phone,
+		&i.TotalSavings,
+		&i.TotalWithdrawn,
+		&i.ReferenceID,
 		&i.PasswordHash,
 		&i.AccountNumber,
 		&i.BankName,
 		&i.TokenBalance,
 		&i.IsActive,
-		&i.IsAdmin,
+		&i.EmailVerified,
+		&i.VerificationCode,
+		&i.VerificationExpiresAt,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 	)
@@ -92,31 +118,37 @@ func (q *Queries) GetUser(ctx context.Context, id uuid.UUID) (User, error) {
 }
 
 const getUserByEmail = `-- name: GetUserByEmail :one
-SELECT id, email, password_hash, is_admin FROM users
+SELECT id, username, email, phone, total_savings, total_withdrawn, reference_id, password_hash, account_number, bank_name, token_balance, is_active, email_verified, verification_code, verification_expires_at, created_at, updated_at FROM users
 WHERE email = $1 LIMIT 1
 `
 
-type GetUserByEmailRow struct {
-	ID           uuid.UUID    `json:"id"`
-	Email        string       `json:"email"`
-	PasswordHash string       `json:"password_hash"`
-	IsAdmin      sql.NullBool `json:"is_admin"`
-}
-
-func (q *Queries) GetUserByEmail(ctx context.Context, email string) (GetUserByEmailRow, error) {
+func (q *Queries) GetUserByEmail(ctx context.Context, email string) (User, error) {
 	row := q.db.QueryRowContext(ctx, getUserByEmail, email)
-	var i GetUserByEmailRow
+	var i User
 	err := row.Scan(
 		&i.ID,
+		&i.Username,
 		&i.Email,
+		&i.Phone,
+		&i.TotalSavings,
+		&i.TotalWithdrawn,
+		&i.ReferenceID,
 		&i.PasswordHash,
-		&i.IsAdmin,
+		&i.AccountNumber,
+		&i.BankName,
+		&i.TokenBalance,
+		&i.IsActive,
+		&i.EmailVerified,
+		&i.VerificationCode,
+		&i.VerificationExpiresAt,
+		&i.CreatedAt,
+		&i.UpdatedAt,
 	)
 	return i, err
 }
 
 const listUsers = `-- name: ListUsers :many
-SELECT id, first_name, last_name, email, phone, password_hash, account_number, bank_name, token_balance, is_active, is_admin, created_at, updated_at FROM users ORDER BY created_at DESC
+SELECT id, username, email, phone, total_savings, total_withdrawn, reference_id, password_hash, account_number, bank_name, token_balance, is_active, email_verified, verification_code, verification_expires_at, created_at, updated_at FROM users ORDER BY created_at DESC
 `
 
 func (q *Queries) ListUsers(ctx context.Context) ([]User, error) {
@@ -130,16 +162,20 @@ func (q *Queries) ListUsers(ctx context.Context) ([]User, error) {
 		var i User
 		if err := rows.Scan(
 			&i.ID,
-			&i.FirstName,
-			&i.LastName,
+			&i.Username,
 			&i.Email,
 			&i.Phone,
+			&i.TotalSavings,
+			&i.TotalWithdrawn,
+			&i.ReferenceID,
 			&i.PasswordHash,
 			&i.AccountNumber,
 			&i.BankName,
 			&i.TokenBalance,
 			&i.IsActive,
-			&i.IsAdmin,
+			&i.EmailVerified,
+			&i.VerificationCode,
+			&i.VerificationExpiresAt,
 			&i.CreatedAt,
 			&i.UpdatedAt,
 		); err != nil {
@@ -156,12 +192,32 @@ func (q *Queries) ListUsers(ctx context.Context) ([]User, error) {
 	return items, nil
 }
 
+const markUserEmailVerified = `-- name: MarkUserEmailVerified :exec
+UPDATE users
+SET email_verified = $2,
+    verification_code = $3,
+    verification_expires_at = NULL,
+    updated_at = NOW()
+WHERE id = $1
+`
+
+type MarkUserEmailVerifiedParams struct {
+	ID               uuid.UUID      `json:"id"`
+	EmailVerified    bool           `json:"email_verified"`
+	VerificationCode sql.NullString `json:"verification_code"`
+}
+
+func (q *Queries) MarkUserEmailVerified(ctx context.Context, arg MarkUserEmailVerifiedParams) error {
+	_, err := q.db.ExecContext(ctx, markUserEmailVerified, arg.ID, arg.EmailVerified, arg.VerificationCode)
+	return err
+}
+
 const searchUsers = `-- name: SearchUsers :many
-SELECT id, first_name, last_name, email, phone, password_hash, account_number, bank_name, token_balance, is_active, is_admin, created_at, updated_at FROM users 
-WHERE 
-    (first_name ILIKE '%' || $1 || '%' OR 
-     last_name ILIKE '%' || $1 || '%' OR 
-     email ILIKE '%' || $1 || '%' OR 
+SELECT id, username, email, phone, total_savings, total_withdrawn, reference_id, password_hash, account_number, bank_name, token_balance, is_active, email_verified, verification_code, verification_expires_at, created_at, updated_at FROM users
+WHERE
+    (first_name ILIKE '%' || $1 || '%' OR
+     last_name ILIKE '%' || $1 || '%' OR
+     email ILIKE '%' || $1 || '%' OR
      phone ILIKE '%' || $1 || '%')
 ORDER BY created_at DESC
 `
@@ -177,16 +233,20 @@ func (q *Queries) SearchUsers(ctx context.Context, dollar_1 sql.NullString) ([]U
 		var i User
 		if err := rows.Scan(
 			&i.ID,
-			&i.FirstName,
-			&i.LastName,
+			&i.Username,
 			&i.Email,
 			&i.Phone,
+			&i.TotalSavings,
+			&i.TotalWithdrawn,
+			&i.ReferenceID,
 			&i.PasswordHash,
 			&i.AccountNumber,
 			&i.BankName,
 			&i.TokenBalance,
 			&i.IsActive,
-			&i.IsAdmin,
+			&i.EmailVerified,
+			&i.VerificationCode,
+			&i.VerificationExpiresAt,
 			&i.CreatedAt,
 			&i.UpdatedAt,
 		); err != nil {
@@ -201,6 +261,25 @@ func (q *Queries) SearchUsers(ctx context.Context, dollar_1 sql.NullString) ([]U
 		return nil, err
 	}
 	return items, nil
+}
+
+const setUserEmailVerification = `-- name: SetUserEmailVerification :exec
+UPDATE users
+SET verification_code = $2,
+    verification_expires_at = $3,
+    updated_at = NOW()
+WHERE id = $1
+`
+
+type SetUserEmailVerificationParams struct {
+	ID                    uuid.UUID      `json:"id"`
+	VerificationCode      sql.NullString `json:"verification_code"`
+	VerificationExpiresAt sql.NullTime   `json:"verification_expires_at"`
+}
+
+func (q *Queries) SetUserEmailVerification(ctx context.Context, arg SetUserEmailVerificationParams) error {
+	_, err := q.db.ExecContext(ctx, setUserEmailVerification, arg.ID, arg.VerificationCode, arg.VerificationExpiresAt)
+	return err
 }
 
 const updateUserStatus = `-- name: UpdateUserStatus :exec
