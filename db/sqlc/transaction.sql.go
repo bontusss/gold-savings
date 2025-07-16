@@ -68,7 +68,7 @@ RETURNING id, user_id, amount, type, status, reason, created_at, updated_at
 
 type CreateTransactionParams struct {
 	UserID uuid.UUID      `json:"user_id"`
-	Amount string         `json:"amount"`
+	Amount int32          `json:"amount"`
 	Type   string         `json:"type"`
 	Status string         `json:"status"`
 	Reason sql.NullString `json:"reason"`
@@ -175,6 +175,18 @@ func (q *Queries) GetTransactionByID(ctx context.Context, id int32) (Transaction
 		&i.UpdatedAt,
 	)
 	return i, err
+}
+
+const getUserFromTransactionID = `-- name: GetUserFromTransactionID :one
+SELECT user_id FROM transactions
+WHERE id = $1
+`
+
+func (q *Queries) GetUserFromTransactionID(ctx context.Context, id int32) (uuid.UUID, error) {
+	row := q.db.QueryRowContext(ctx, getUserFromTransactionID, id)
+	var user_id uuid.UUID
+	err := row.Scan(&user_id)
+	return user_id, err
 }
 
 const listPayoutRequestsByCategory = `-- name: ListPayoutRequestsByCategory :many

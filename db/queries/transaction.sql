@@ -10,6 +10,10 @@ RETURNING *;
 SELECT * FROM transactions
 WHERE id = $1;
 
+-- name: GetUserFromTransactionID :one
+SELECT user_id FROM transactions
+WHERE id = $1;
+
 -- name: ListTransactionsByUserID :many
 SELECT * FROM transactions
 WHERE user_id = $1

@@ -4,9 +4,12 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"gold-savings/api/utils"
 	db "gold-savings/db/sqlc"
+	"net/http"
 
 	"gold-savings/internal/auth"
+	"gold-savings/internal/config"
 
 	"github.com/google/uuid"
 	"github.com/shopspring/decimal"
@@ -14,14 +17,16 @@ import (
 
 type UserService struct {
 	queries *db.Queries
+	config  *config.Config
 }
 
 // ErrInvestmentAmountOutOfRange is returned when the investment amount is not within the allowed range.
 var ErrInvestmentAmountOutOfRange = fmt.Errorf("investment amount is out of allowed range")
 
-func NewUserService(queries *db.Queries) *UserService {
+func NewUserService(queries *db.Queries, c *config.Config) *UserService {
 	return &UserService{
 		queries: queries,
+		config:  c,
 	}
 }
 
@@ -91,22 +96,101 @@ func (s *UserService) CreateSavingsPaymentRequest(ctx context.Context, userID uu
 	if err != nil {
 		return nil, err
 	}
+
+	user, err := s.queries.GetUser(ctx, userID)
+	if err != nil {
+		return nil, err
+	}
+
+	plunk := utils.Plunk{
+		HttpClient: http.DefaultClient,
+		Config:     s.config,
+	}
+	emailbody, _ := utils.RenderEmailTemplate("templates/savings_payment_request.html", map[string]any{
+		"Username":      user.Username,
+		"Amount":        amount.String(),
+		"BankName":      bankName,
+		"AccountName":   account_name,
+		"AccountNumber": account_number,
+		"Type":          payment.Type,
+		"Date":          payment.CreatedAt.Time.Format("2006-01-02 15:04:05"),
+		"ApproveURL":    fmt.Sprintf("%s/admin/api/approve-payment/%d", s.config.BaseURL, payment.ID),
+	})
+
+	fmt.Printf("Processing payment ID: %d for user: %s\n", payment.ID, user.Username)
+
+	emailbody2, _ := utils.RenderEmailTemplate("templates/user_payment_request.html", map[string]any{
+		"Username":      user.Username,
+		"Amount":        amount.String(),
+		"BankName":      bankName,
+		"AccountName":   account_name,
+		"AccountNumber": account_number,
+		"Type":          payment.Type,
+		"Date":          payment.CreatedAt.Time.Format("2006-01-02 15:04:05"),
+	})
+	err = plunk.SendEmail(s.config.AdminEmail, "New Savings Payment Request", emailbody)
+	if err != nil {
+		return nil, fmt.Errorf("failed to send admin email notification: %w", err)
+	}
+	err = plunk.SendEmail(user.Email, "New Savings Payment Request", emailbody2)
+	if err != nil {
+		return nil, fmt.Errorf("failed to send admin email notification: %w", err)
+	}
 	return &payment, nil
 }
 
 func (s *UserService) CreateInvestmentPaymentRequest(ctx context.Context, userID uuid.UUID, investment_id uuid.NullUUID, amount decimal.Decimal, bankName, account_name string) (*db.PayoutRequest, error) {
 	args := db.CreatePayoutRequestParams{
-		UserID:      userID,
-		BankName:    bankName,
-		AccountName: account_name,
+		UserID:       userID,
+		BankName:     bankName,
+		AccountName:  account_name,
 		InvestmentID: investment_id,
-		Type:        string(InvestmentRequest),
-		Category:    string(DepositTransaction),
-		Amount:      amount.String(),
+		Type:         string(InvestmentRequest),
+		Category:     string(DepositTransaction),
+		Amount:       amount.String(),
 	}
 	payment, err := s.queries.CreatePayoutRequest(ctx, args)
 	if err != nil {
 		return nil, err
+	}
+
+	user, err := s.queries.GetUser(ctx, userID)
+	if err != nil {
+		return nil, err
+	}
+
+	plunk := utils.Plunk{
+		HttpClient: http.DefaultClient,
+		Config:     s.config,
+	}
+	emailbody, _ := utils.RenderEmailTemplate("templates/savings_payment_request.html", map[string]any{
+		"Username":      user.Username,
+		"Amount":        amount.String(),
+		"BankName":      bankName,
+		"AccountName":   account_name,
+		"AccountNumber": "-",
+		"Type":          payment.Type,
+		"Date":          payment.CreatedAt.Time.Format("2006-01-02 15:04:05"),
+		"ApproveURL":    fmt.Sprintf("%s/admin/api/approve-investment/%d", s.config.BaseURL, payment.ID),
+	})
+
+	fmt.Printf("Processing payment ID: %d for user: %s\n", payment.ID, user.Username)
+
+	emailbody2, _ := utils.RenderEmailTemplate("templates/user_payment_request.html", map[string]any{
+		"Username":    user.Username,
+		"Amount":      amount.String(),
+		"BankName":    bankName,
+		"AccountName": account_name,
+		"Type":        payment.Type,
+		"Date":        payment.CreatedAt.Time.Format("2006-01-02 15:04:05"),
+	})
+	err = plunk.SendEmail(s.config.AdminEmail, "New Investment Payment Request", emailbody)
+	if err != nil {
+		return nil, fmt.Errorf("failed to send admin email notification: %w", err)
+	}
+	err = plunk.SendEmail(user.Email, "New Investment Payment Request", emailbody2)
+	if err != nil {
+		return nil, fmt.Errorf("failed to send admin email notification: %w", err)
 	}
 	return &payment, nil
 }
@@ -114,7 +198,7 @@ func (s *UserService) CreateInvestmentPaymentRequest(ctx context.Context, userID
 func (s *UserService) CreateTransaction(ctx context.Context, userID uuid.UUID, amount decimal.Decimal, Ttype string) (*db.Transaction, error) {
 	args := db.CreateTransactionParams{
 		UserID: userID,
-		Amount: amount.String(),
+		Amount: int32(amount.IntPart()),
 		Type:   Ttype,
 		Status: string(PendingTransaction),
 		Reason: sql.NullString{String: "", Valid: false},
@@ -153,7 +237,7 @@ func (s *UserService) CreateInvestment(ctx context.Context, userID uuid.UUID, pl
 	args := db.CreateInvestmentParams{
 		UserID:       userID,
 		PlanID:       planID,
-		Amount:       amount.String(),
+		Amount:       int32(amount.IntPart()),
 		Status:       string(PendingInvestment),
 		ReferenceID:  IRefID,
 		InterestRate: iPlan.InterestRate,
@@ -210,4 +294,12 @@ func (s *UserService) GetInvestmentByRefCode(ctx context.Context, refCode string
 		return nil, err
 	}
 	return &pr, nil
+}
+
+func (s *UserService) GetUserByID(ctx context.Context, userID uuid.UUID) (*db.User, error) {
+	user, err := s.queries.GetUser(ctx, userID)
+	if err != nil {
+		return nil, err
+	}
+	return &user, nil
 }

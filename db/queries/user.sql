@@ -51,3 +51,20 @@ SET email_verified = $2,
     verification_expires_at = NULL,
     updated_at = NOW()
 WHERE id = $1;
+
+-- name: UpdateUserTotalSavings :exec
+UPDATE users
+SET total_savings = $2,
+    updated_at = NOW()
+WHERE id = $1;
+
+-- name: GetUserTotalSavings :one
+SELECT total_savings
+FROM users
+WHERE id = $1;
+
+-- name: UpdateUserTotalInvestmentBalance :exec
+UPDATE users
+SET total_investment_amount = $2,
+    updated_at = NOW()
+WHERE id = $1;

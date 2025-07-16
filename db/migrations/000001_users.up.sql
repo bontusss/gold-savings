@@ -7,8 +7,10 @@ CREATE TABLE
     username TEXT NOT NULL,
     email TEXT UNIQUE NOT NULL,
     phone TEXT UNIQUE NOT NULL,
-    total_savings NUMERIC(10, 2),
-    total_withdrawn NUMERIC(10, 2),
+    total_savings INTEGER NOT NULL DEFAULT 0,
+    total_savings_withdrawn INTEGER NOT NULL DEFAULT 0,
+    total_investment_amount INTEGER NOT NULL DEFAULT 0,
+    total_investment_withdrawn INTEGER NOT NULL DEFAULT 0,
     reference_id TEXT UNIQUE NOT NULL,
     password_hash TEXT NOT NULL,
     account_number TEXT,
@@ -20,4 +22,4 @@ CREATE TABLE
     verification_expires_at TIMESTAMP,
     created_at TIMESTAMP DEFAULT NOW (),
     updated_at TIMESTAMP DEFAULT NOW ()
-  ); 
+  );

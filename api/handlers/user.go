@@ -118,7 +118,14 @@ func (s *userHandler) CreateInvestmentPaymentRequest(c *gin.Context) {
 		return
 	}
 
-	c.JSON(201, payment)
+	transaction, err := s.userService.CreateTransaction(c, userID, amountDecimal, payment.Type)
+	if err != nil {
+		log.Printf("error creating transaction: %v", err)
+		c.JSON(500, serverError)
+		return
+	}
+
+	c.JSON(201, transaction)
 }
 func (s *userHandler) ListUserSavingsTransactions(c *gin.Context) {
 	userID, err := utils.GetActiveUserID(c)
@@ -207,4 +214,21 @@ func (s *userHandler) ListUserInvestments(c *gin.Context) {
 	}
 
 	c.JSON(200, investments)
+}
+
+func (s *userHandler) GetUser(c *gin.Context) {
+	userID, err := utils.GetActiveUserID(c)
+	if err != nil {
+		log.Printf("error getting active user ID: %v", err)
+		c.JSON(500, serverError)
+		return
+	}
+
+	user, err := s.userService.GetUserByID(c, userID)
+	if err != nil {
+		log.Printf("error getting user: %v", err)
+		c.JSON(500, serverError)
+		return
+	}
+	c.JSON(200, user)
 }

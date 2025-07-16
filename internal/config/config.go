@@ -28,6 +28,7 @@ type Config struct {
 	AdminPassword  string `mapstructure:"ADMIN_PASSWORD"`
 	PlunkBaseUrl   string `mapstructure:"PLUNK_BASE_URL"`
 	PlunkSecretKey string `mapstructure:"PLUNK_SECRET_KEY"`
+	BaseURL        string `mapstructure:"BaseURL"`
 }
 
 func LoadConfig(path string) (*Config, error) {
@@ -66,6 +67,7 @@ func LoadConfig(path string) (*Config, error) {
 	_ = v.BindEnv("ADMIN_PASSWORD")
 	_ = v.BindEnv("PLUNK_BASE_URL")
 	_ = v.BindEnv("PLUNK_SECRET_KEY")
+	_ = v.BindEnv("BaseURL")
 
 	// Create config struct
 	var config Config

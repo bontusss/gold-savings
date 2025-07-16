@@ -24,7 +24,7 @@ RETURNING id, user_id, plan_id, reference_id, amount, interest, interest_rate, s
 type CreateInvestmentParams struct {
 	UserID       uuid.UUID `json:"user_id"`
 	PlanID       int32     `json:"plan_id"`
-	Amount       string    `json:"amount"`
+	Amount       int32     `json:"amount"`
 	Interest     string    `json:"interest"`
 	InterestRate string    `json:"interest_rate"`
 	Status       string    `json:"status"`
@@ -174,6 +174,18 @@ func (q *Queries) GetSavingsByID(ctx context.Context, id uuid.UUID) (Saving, err
 	return i, err
 }
 
+const getUserFromInestmentID = `-- name: GetUserFromInestmentID :one
+SELECT user_id FROM investments
+WHERE id = $1
+`
+
+func (q *Queries) GetUserFromInestmentID(ctx context.Context, id uuid.UUID) (uuid.UUID, error) {
+	row := q.db.QueryRowContext(ctx, getUserFromInestmentID, id)
+	var user_id uuid.UUID
+	err := row.Scan(&user_id)
+	return user_id, err
+}
+
 const listInvestmentsByPlan = `-- name: ListInvestmentsByPlan :many
 SELECT id, user_id, plan_id, reference_id, amount, interest, interest_rate, status, start_date, end_date, created_at, updated_at FROM investments
 WHERE plan_id = $1
@@ -308,7 +320,7 @@ type ListUserInvestmentsWithPlanRow struct {
 	UserID       uuid.UUID    `json:"user_id"`
 	PlanID       int32        `json:"plan_id"`
 	ReferenceID  string       `json:"reference_id"`
-	Amount       string       `json:"amount"`
+	Amount       int32        `json:"amount"`
 	Interest     string       `json:"interest"`
 	InterestRate string       `json:"interest_rate"`
 	Status       string       `json:"status"`

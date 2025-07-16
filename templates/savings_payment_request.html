@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f9f9f9;
+    }
+
+    .container {
+      background: #fff;
+      padding: 24px;
+      border-radius: 8px;
+      max-width: 480px;
+      margin: auto;
+    }
+
+    .title {
+      color: #d4af37;
+    }
+
+    .details {
+      background: #f4f4f4;
+      padding: 12px;
+      border-radius: 6px;
+      margin: 16px 0;
+    }
+
+    .label {
+      color: #555;
+    }
+
+    .value {
+      color: #222;
+      font-weight: bold;
+    }
+
+    .footer {
+      font-size: 0.9em;
+      color: #888;
+      margin-top: 24px;
+    }
+
+    .action {
+      margin-top: 24px;
+    }
+
+    .btn {
+      background: #d4af37;
+      color: #fff;
+      padding: 10px 20px;
+      border: none;
+      border-radius: 4px;
+      text-decoration: none;
+      font-weight: bold;
+      cursor: pointer;
+      margin-right: 10px;
+    }
+
+    .btn-reject {
+      background: #e74c3c;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="container">
+    <h2 class="title">New {{.Type}} Payment Request</h2>
+    <p>Dear Admin,</p>
+    <p>A new savings payment request has been submitted on <b>Gold Savings</b>. Please review the details below and take
+      action:</p>
+    <div class="details">
+      <div><span class="label">User:</span> <span class="value">{{.Username}}</span></div>
+      <div><span class="label">Amount:</span> <span class="value">{{.Amount}}</span></div>
+      <div><span class="label">Bank Name:</span> <span class="value">{{.BankName}}</span></div>
+      <div><span class="label">Account Name:</span> <span class="value">{{.AccountName}}</span></div>
+      <div><span class="label">Account Number:</span> <span class="value">{{.AccountNumber}}</span></div>
+      <div><span class="label">Date:</span> <span class="value">{{.Date}}</span></div>
+    </div>
+    <div class="action">
+      <!-- Replace # with actual approval/rejection links if available -->
+      <a href="{{.ApproveURL}}" class="btn">Approve</a>
+      <a href="{{.RejectURL}}" class="btn btn-reject">Reject</a>
+    </div>
+    <div class="footer">This is an automated notification from Gold Savings.</div>

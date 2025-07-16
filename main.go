@@ -55,8 +55,8 @@ func main() {
 	queries := db.New(dbConn)
 
 	authService := auth.NewAuthService(queries, c)
-	adminService := services.NewAdminService(queries)
-	userService := services.NewUserService(queries)
+	adminService := services.NewAdminService(queries,c)
+	userService := services.NewUserService(queries, c)
 
 	// Create a Gin router
 	router := gin.Default()

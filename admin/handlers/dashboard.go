@@ -12,8 +12,10 @@ import (
 	"gold-savings/internal/services"
 	"log"
 	"net/http"
+	"strconv"
 
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 )
 
 // handler.go TODO:
@@ -88,7 +90,7 @@ func (h *DashboardHandler) ShowCreatePlan(c *gin.Context) {
 	}
 }
 
-func (h *DashboardHandler) CreateInvestmentPlan (c *gin.Context) {
+func (h *DashboardHandler) CreateInvestmentPlan(c *gin.Context) {
 	var req db.CreateInvestmentPlanParams
 	if err := c.ShouldBindJSON(&req); err != nil {
 		log.Printf("create plan request error: %v", err)
@@ -102,4 +104,44 @@ func (h *DashboardHandler) CreateInvestmentPlan (c *gin.Context) {
 		return
 	}
 	c.JSON(200, "plan created")
+}
+
+func (h *DashboardHandler) ApprovePayment(c *gin.Context) {
+	transactionIDStr := c.Param("id")
+	transID, err := strconv.Atoi(transactionIDStr)
+	if err != nil {
+		log.Printf("invalid transaction ID: %v", err)
+		c.JSON(400, "invalid transaction ID")
+		return
+	}
+
+	// Approve directly, no JSON body needed
+	err = h.admin.ApprovePayment(c, int32(transID), "approved", "Approved by admin via email link")
+	if err != nil {
+		log.Printf("error updating transaction status: %v", err)
+		c.JSON(500, serverError)
+		return
+	}
+
+	c.JSON(200, "transaction status updated")
+}
+
+func (h *DashboardHandler) ApproveInvestment(c *gin.Context) {
+	transactionIDStr := c.Param("id")
+	uuidValue, err := uuid.Parse(transactionIDStr)
+	if err != nil {
+		log.Printf("invalid transaction ID: %v", err)
+		c.JSON(400, "invalid transaction ID")
+		return
+	}
+
+	// Approve directly, no JSON body needed
+	err = h.admin.ApproveInvestment(c, uuidValue, "active")
+	if err != nil {
+		log.Printf("error updating transaction status: %v", err)
+		c.JSON(500, serverError)
+		return
+	}
+
+	c.JSON(200, "transaction status updated")
 }

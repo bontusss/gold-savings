@@ -2,7 +2,7 @@ CREATE TABLE
   transactions (
     id SERIAL PRIMARY KEY,
     user_id UUID NOT NULL REFERENCES users (id) ON DELETE CASCADE,
-    amount NUMERIC(12, 2) NOT NULL CHECK (amount > 0),
+    amount INTEGER NOT NULL CHECK (amount > 0),
     type TEXT NOT NULL CHECK (type IN ('savings', 'investment')),
     status TEXT NOT NULL CHECK (
       status IN ('deposit', 'withdrawal', 'pending', 'declined')
@@ -36,7 +36,7 @@ CREATE TABLE
     user_id UUID NOT NULL REFERENCES users (id) ON DELETE CASCADE,
     plan_id INTEGER NOT NULL REFERENCES investment_plans (id) ON DELETE CASCADE,
     reference_id TEXT NOT NULL, -- unique reference for the investment
-    amount NUMERIC(12, 2) NOT NULL,
+    amount INTEGER NOT NULL CHECK (amount > 0), -- total amount invested
     interest NUMERIC(12, 2) NOT NULL DEFAULT 0.00, -- total interest earned on this investment
     interest_rate NUMERIC(5, 2) NOT NULL, -- snapshot of plan rate at time of investment
     status TEXT NOT NULL DEFAULT 'active', -- e.g. active, completed, withdrawn

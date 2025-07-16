@@ -10,6 +10,10 @@ RETURNING *;
 SELECT * FROM investments
 WHERE id = $1;
 
+-- name: GetUserFromInestmentID :one
+SELECT user_id FROM investments
+WHERE id = $1;
+
 -- name: GetInvestmentByRefCode :one
 SELECT * FROM investments
 WHERE reference_id = $1;

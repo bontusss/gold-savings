@@ -23,7 +23,7 @@ type Investment struct {
 	UserID       uuid.UUID    `json:"user_id"`
 	PlanID       int32        `json:"plan_id"`
 	ReferenceID  string       `json:"reference_id"`
-	Amount       string       `json:"amount"`
+	Amount       int32        `json:"amount"`
 	Interest     string       `json:"interest"`
 	InterestRate string       `json:"interest_rate"`
 	Status       string       `json:"status"`
@@ -67,7 +67,7 @@ type Saving struct {
 type Transaction struct {
 	ID        int32          `json:"id"`
 	UserID    uuid.UUID      `json:"user_id"`
-	Amount    string         `json:"amount"`
+	Amount    int32          `json:"amount"`
 	Type      string         `json:"type"`
 	Status    string         `json:"status"`
 	Reason    sql.NullString `json:"reason"`
@@ -76,21 +76,23 @@ type Transaction struct {
 }
 
 type User struct {
-	ID                    uuid.UUID      `json:"id"`
-	Username              string         `json:"username"`
-	Email                 string         `json:"email"`
-	Phone                 string         `json:"phone"`
-	TotalSavings          sql.NullString `json:"total_savings"`
-	TotalWithdrawn        sql.NullString `json:"total_withdrawn"`
-	ReferenceID           string         `json:"reference_id"`
-	PasswordHash          string         `json:"password_hash"`
-	AccountNumber         sql.NullString `json:"account_number"`
-	BankName              sql.NullString `json:"bank_name"`
-	TokenBalance          sql.NullInt32  `json:"token_balance"`
-	IsActive              sql.NullBool   `json:"is_active"`
-	EmailVerified         bool           `json:"email_verified"`
-	VerificationCode      sql.NullString `json:"verification_code"`
-	VerificationExpiresAt sql.NullTime   `json:"verification_expires_at"`
-	CreatedAt             sql.NullTime   `json:"created_at"`
-	UpdatedAt             sql.NullTime   `json:"updated_at"`
+	ID                       uuid.UUID      `json:"id"`
+	Username                 string         `json:"username"`
+	Email                    string         `json:"email"`
+	Phone                    string         `json:"phone"`
+	TotalSavings             int32          `json:"total_savings"`
+	TotalSavingsWithdrawn    int32          `json:"total_savings_withdrawn"`
+	TotalInvestmentAmount    int32          `json:"total_investment_amount"`
+	TotalInvestmentWithdrawn int32          `json:"total_investment_withdrawn"`
+	ReferenceID              string         `json:"reference_id"`
+	PasswordHash             string         `json:"password_hash"`
+	AccountNumber            sql.NullString `json:"account_number"`
+	BankName                 sql.NullString `json:"bank_name"`
+	TokenBalance             sql.NullInt32  `json:"token_balance"`
+	IsActive                 sql.NullBool   `json:"is_active"`
+	EmailVerified            bool           `json:"email_verified"`
+	VerificationCode         sql.NullString `json:"verification_code"`
+	VerificationExpiresAt    sql.NullTime   `json:"verification_expires_at"`
+	CreatedAt                sql.NullTime   `json:"created_at"`
+	UpdatedAt                sql.NullTime   `json:"updated_at"`
 }
