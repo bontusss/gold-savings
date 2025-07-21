@@ -8,6 +8,7 @@ package db
 import (
 	"context"
 	"database/sql"
+	"time"
 
 	"github.com/google/uuid"
 )
@@ -270,6 +271,89 @@ func (q *Queries) ListInvestmentsByUser(ctx context.Context, userID uuid.UUID) (
 	return items, nil
 }
 
+const listInvestmentsWithUserAndPlan = `-- name: ListInvestmentsWithUserAndPlan :many
+SELECT
+  investments.id,
+  investments.reference_id,
+  investments.amount,
+  investments.interest,
+  investments.interest_rate,
+  investments.status,
+  investments.start_date,
+  investments.end_date,
+  investments.created_at,
+  investments.updated_at,
+
+  users.id AS user_id,
+  users.username,
+  users.email,
+
+  investment_plans.id AS plan_id,
+  investment_plans.name AS plan_name
+
+FROM investments
+JOIN users ON users.id = investments.user_id
+JOIN investment_plans ON investment_plans.id = investments.plan_id
+ORDER BY investments.created_at DESC
+`
+
+type ListInvestmentsWithUserAndPlanRow struct {
+	ID           uuid.UUID    `json:"id"`
+	ReferenceID  string       `json:"reference_id"`
+	Amount       int32        `json:"amount"`
+	Interest     string       `json:"interest"`
+	InterestRate string       `json:"interest_rate"`
+	Status       string       `json:"status"`
+	StartDate    sql.NullTime `json:"start_date"`
+	EndDate      sql.NullTime `json:"end_date"`
+	CreatedAt    time.Time    `json:"created_at"`
+	UpdatedAt    time.Time    `json:"updated_at"`
+	UserID       uuid.UUID    `json:"user_id"`
+	Username     string       `json:"username"`
+	Email        string       `json:"email"`
+	PlanID       int32        `json:"plan_id"`
+	PlanName     string       `json:"plan_name"`
+}
+
+func (q *Queries) ListInvestmentsWithUserAndPlan(ctx context.Context) ([]ListInvestmentsWithUserAndPlanRow, error) {
+	rows, err := q.db.QueryContext(ctx, listInvestmentsWithUserAndPlan)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []ListInvestmentsWithUserAndPlanRow{}
+	for rows.Next() {
+		var i ListInvestmentsWithUserAndPlanRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.ReferenceID,
+			&i.Amount,
+			&i.Interest,
+			&i.InterestRate,
+			&i.Status,
+			&i.StartDate,
+			&i.EndDate,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+			&i.UserID,
+			&i.Username,
+			&i.Email,
+			&i.PlanID,
+			&i.PlanName,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const listSavingsByUserID = `-- name: ListSavingsByUserID :many
 SELECT id, user_id, amount, created_at, updated_at FROM savings
 WHERE user_id = $1
@@ -326,8 +410,8 @@ type ListUserInvestmentsWithPlanRow struct {
 	Status       string       `json:"status"`
 	StartDate    sql.NullTime `json:"start_date"`
 	EndDate      sql.NullTime `json:"end_date"`
-	CreatedAt    sql.NullTime `json:"created_at"`
-	UpdatedAt    sql.NullTime `json:"updated_at"`
+	CreatedAt    time.Time    `json:"created_at"`
+	UpdatedAt    time.Time    `json:"updated_at"`
 	PlanName     string       `json:"plan_name"`
 }
 

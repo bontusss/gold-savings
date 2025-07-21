@@ -15,7 +15,6 @@ import (
 	"strconv"
 
 	"github.com/gin-gonic/gin"
-	"github.com/google/uuid"
 )
 
 // handler.go TODO:
@@ -41,13 +40,34 @@ func (h *DashboardHandler) ShowDashboard(c *gin.Context) {
 		return
 	}
 
+	ts, err := h.queries.GetTotalSavingsInApp(c)
 	if err != nil {
-		log.Printf("error getting active users count: %v", err)
-		c.String(500, "error fetching active user count")
+		log.Printf("error getting total savings: %v", err)
+		c.String(500, "error fetching total savings")
 		return
 	}
 
-	err = components.DashboardT(activeUsersCount).Render(c, c.Writer)
+	ia, err := h.queries.GetTotalInvestmentInApp(c)
+	if err != nil {
+		log.Printf("error getting total savings: %v", err)
+		c.String(500, "error fetching total savings")
+		return
+	}
+
+	tt, err := h.queries.GetTotalTokens(c)
+	if err != nil {
+		log.Printf("error getting total savings: %v", err)
+		c.String(500, "error fetching total savings")
+		return
+	}
+	requests, _ := h.queries.ListAllPayoutRequests(c)
+	topUsers, _ := h.queries.ListUsersByTotalSavingsDesc(c)
+	trans, _ := h.queries.ListPendingTransactionsWithUser(c)
+	plans, _ := h.queries.GetAllInvestmentPlans(c)
+	i, _ := h.queries.ListInvestmentsWithUserAndPlan(c)
+	savings, _ := h.queries.ListTransactionsByType(c, "savings")
+
+	err = components.DashboardT(activeUsersCount, ts, ia, tt, topUsers, plans, requests, trans, i, savings).Render(c, c.Writer)
 	if err != nil {
 		c.String(http.StatusInternalServerError, "Error rendering dashboard page")
 		return
@@ -126,9 +146,9 @@ func (h *DashboardHandler) ApprovePayment(c *gin.Context) {
 	c.JSON(200, "transaction status updated")
 }
 
-func (h *DashboardHandler) ApproveInvestment(c *gin.Context) {
+func (h *DashboardHandler) DeclinePayment(c *gin.Context) {
 	transactionIDStr := c.Param("id")
-	uuidValue, err := uuid.Parse(transactionIDStr)
+	transID, err := strconv.Atoi(transactionIDStr)
 	if err != nil {
 		log.Printf("invalid transaction ID: %v", err)
 		c.JSON(400, "invalid transaction ID")
@@ -136,7 +156,7 @@ func (h *DashboardHandler) ApproveInvestment(c *gin.Context) {
 	}
 
 	// Approve directly, no JSON body needed
-	err = h.admin.ApproveInvestment(c, uuidValue, "active")
+	err = h.admin.DeclinePayment(c, int32(transID), "declined", "Declined by admin via email link")
 	if err != nil {
 		log.Printf("error updating transaction status: %v", err)
 		c.JSON(500, serverError)
@@ -144,4 +164,72 @@ func (h *DashboardHandler) ApproveInvestment(c *gin.Context) {
 	}
 
 	c.JSON(200, "transaction status updated")
+}
+
+func (h *DashboardHandler) ApproveInvestment(c *gin.Context) {
+	transactionIDStr := c.Param("id")
+	transID, err := strconv.Atoi(transactionIDStr)
+	if err != nil {
+		log.Printf("invalid transaction ID: %v", err)
+		if isHTMX(c) {
+			c.String(400, "Invalid transaction ID")
+		} else {
+			c.JSON(400, gin.H{"error": "Invalid transaction ID"})
+		}
+		return
+	}
+
+	err = h.admin.ApproveInvestment(c, int32(transID), "approved", "Approved by admin via email link")
+	if err != nil {
+		log.Printf("error updating transaction status: %v", err)
+		if isHTMX(c) {
+			c.String(500, "Server error")
+		} else {
+			c.JSON(500, gin.H{"error": serverError})
+		}
+		return
+	}
+
+	if isHTMX(c) {
+		// Render partial or return a success message
+		c.String(200, "✅ Approved") // or render a partial HTML block
+	} else {
+		c.JSON(200, gin.H{"message": "Transaction status updated"})
+	}
+}
+
+func (h *DashboardHandler) DeclineInvestment(c *gin.Context) {
+	transactionIDStr := c.Param("id")
+	transID, err := strconv.Atoi(transactionIDStr)
+	if err != nil {
+		log.Printf("invalid transaction ID: %v", err)
+		if isHTMX(c) {
+			c.String(400, "Invalid transaction ID")
+		} else {
+			c.JSON(400, gin.H{"error": "Invalid transaction ID"})
+		}
+		return
+	}
+
+	err = h.admin.DeclineInvestment(c, int32(transID), "declined", "Declined by admin via email link")
+	if err != nil {
+		log.Printf("error updating transaction status: %v", err)
+		if isHTMX(c) {
+			c.String(500, "Server error")
+		} else {
+			c.JSON(500, gin.H{"error": serverError})
+		}
+		return
+	}
+
+	if isHTMX(c) {
+		// Render partial or return a success message
+		c.String(200, "✅ Approved") // or render a partial HTML block
+	} else {
+		c.JSON(200, gin.H{"message": "Transaction status updated"})
+	}
+}
+
+func isHTMX(c *gin.Context) bool {
+	return c.GetHeader("HX-Request") == "true"
 }

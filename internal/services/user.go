@@ -115,6 +115,7 @@ func (s *UserService) CreateSavingsPaymentRequest(ctx context.Context, userID uu
 		"Type":          payment.Type,
 		"Date":          payment.CreatedAt.Time.Format("2006-01-02 15:04:05"),
 		"ApproveURL":    fmt.Sprintf("%s/admin/api/approve-payment/%d", s.config.BaseURL, payment.ID),
+		"RejectURL":     fmt.Sprintf("%s/admin/api/decline-payment/%d", s.config.BaseURL, payment.ID),
 	})
 
 	fmt.Printf("Processing payment ID: %d for user: %s\n", payment.ID, user.Username)
@@ -128,10 +129,13 @@ func (s *UserService) CreateSavingsPaymentRequest(ctx context.Context, userID uu
 		"Type":          payment.Type,
 		"Date":          payment.CreatedAt.Time.Format("2006-01-02 15:04:05"),
 	})
+	fmt.Println("sending admin email ...")
 	err = plunk.SendEmail(s.config.AdminEmail, "New Savings Payment Request", emailbody)
 	if err != nil {
 		return nil, fmt.Errorf("failed to send admin email notification: %w", err)
 	}
+
+	fmt.Println("sending user email ...")
 	err = plunk.SendEmail(user.Email, "New Savings Payment Request", emailbody2)
 	if err != nil {
 		return nil, fmt.Errorf("failed to send admin email notification: %w", err)
@@ -172,6 +176,7 @@ func (s *UserService) CreateInvestmentPaymentRequest(ctx context.Context, userID
 		"Type":          payment.Type,
 		"Date":          payment.CreatedAt.Time.Format("2006-01-02 15:04:05"),
 		"ApproveURL":    fmt.Sprintf("%s/admin/api/approve-investment/%d", s.config.BaseURL, payment.ID),
+		"RejectURL":     fmt.Sprintf("%s/admin/api/decline-investment/%d", s.config.BaseURL, payment.ID),
 	})
 
 	fmt.Printf("Processing payment ID: %d for user: %s\n", payment.ID, user.Username)
@@ -195,13 +200,14 @@ func (s *UserService) CreateInvestmentPaymentRequest(ctx context.Context, userID
 	return &payment, nil
 }
 
-func (s *UserService) CreateTransaction(ctx context.Context, userID uuid.UUID, amount decimal.Decimal, Ttype string) (*db.Transaction, error) {
+func (s *UserService) CreateTransaction(ctx context.Context, userID uuid.UUID, investmentID uuid.NullUUID, amount decimal.Decimal, Ttype string) (*db.Transaction, error) {
 	args := db.CreateTransactionParams{
-		UserID: userID,
-		Amount: int32(amount.IntPart()),
-		Type:   Ttype,
-		Status: string(PendingTransaction),
-		Reason: sql.NullString{String: "", Valid: false},
+		UserID:       userID,
+		Amount:       int32(amount.IntPart()),
+		Type:         Ttype,
+		InvestmentID: investmentID,
+		Status:       string(PendingTransaction),
+		Reason:       sql.NullString{String: "", Valid: false},
 	}
 	transaction, err := s.queries.CreateTransaction(ctx, args)
 	if err != nil {
@@ -302,4 +308,32 @@ func (s *UserService) GetUserByID(ctx context.Context, userID uuid.UUID) (*db.Us
 		return nil, err
 	}
 	return &user, nil
+}
+
+func (s *UserService) GetUserSavingsBalance(ctx context.Context, userID uuid.UUID) (int32, error) {
+	totalSavings, err := s.queries.GetUserTotalSavings(ctx, userID)
+	if err != nil {
+		return 0, fmt.Errorf("error getting user savings balance: %v", err)
+	}
+	return totalSavings, nil
+}
+
+func (s *UserService) GetUserInvestmentBalance(ctx context.Context, userID uuid.UUID) (int32, error) {
+	totalSavings, err := s.queries.GetUserInvestmentBalance(ctx, userID)
+	if err != nil {
+		return 0, fmt.Errorf("error getting user savings balance: %v", err)
+	}
+	return totalSavings, nil
+}
+
+func (s *UserService) UpdateEmailAndUsername(ctx context.Context, email, username string, id uuid.UUID) error {
+	args := db.UpdateUsernameEmailParams{
+		ID:       id,
+		Username: username,
+		Email:    email,
+	}
+	if err := s.queries.UpdateUsernameEmail(ctx, args); err != nil {
+		return fmt.Errorf("error updating username and email: %v", err)
+	}
+	return nil
 }

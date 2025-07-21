@@ -62,8 +62,10 @@ func (s *userHandler) CreateSavingsPaymentRequest(c *gin.Context) {
 		c.JSON(500, serverError)
 		return
 	}
+	investmentID := uuid.NullUUID{Valid: false}
 
-	transaction, err := s.userService.CreateTransaction(c, userID, amountDecimal, payment.Type)
+
+	transaction, err := s.userService.CreateTransaction(c, userID, investmentID, amountDecimal, payment.Type)
 	if err != nil {
 		log.Printf("error creating transaction: %v", err)
 		c.JSON(500, serverError)
@@ -118,7 +120,7 @@ func (s *userHandler) CreateInvestmentPaymentRequest(c *gin.Context) {
 		return
 	}
 
-	transaction, err := s.userService.CreateTransaction(c, userID, amountDecimal, payment.Type)
+	transaction, err := s.userService.CreateTransaction(c, userID, investmentID, amountDecimal, payment.Type)
 	if err != nil {
 		log.Printf("error creating transaction: %v", err)
 		c.JSON(500, serverError)
@@ -231,4 +233,68 @@ func (s *userHandler) GetUser(c *gin.Context) {
 		return
 	}
 	c.JSON(200, user)
+}
+
+func (s *userHandler) GetUserSavingsBalance(c *gin.Context) {
+	userID, err := utils.GetActiveUserID(c)
+	if err != nil {
+		log.Printf("error getting active user ID: %v", err)
+		c.JSON(500, serverError)
+		return
+	}
+
+	bal, err := s.userService.GetUserSavingsBalance(c, userID)
+	if err != nil {
+		c.JSON(500, serverError)
+		return
+	}
+
+	c.JSON(200, bal)
+
+}
+
+func (s *userHandler) GetUserInvestmentBalance(c *gin.Context) {
+	userID, err := utils.GetActiveUserID(c)
+	if err != nil {
+		log.Printf("error getting active user ID: %v", err)
+		c.JSON(500, serverError)
+		return
+	}
+
+	bal, err := s.userService.GetUserInvestmentBalance(c, userID)
+	if err != nil {
+		c.JSON(500, serverError)
+		return
+	}
+
+	c.JSON(200, bal)
+}
+
+func (s *userHandler) UpdateEmailAndUsername(c *gin.Context) {
+	userID, err := utils.GetActiveUserID(c)
+	if err != nil {
+		log.Printf("error getting active user ID: %v", err)
+		c.JSON(500, serverError)
+		return
+	}
+
+	type UpdateInput struct {
+		Email    string `json:"email" binding:"required,email"`
+		Username string `json:"username" binding:"required"`
+	}
+	var req UpdateInput
+
+	if err := c.ShouldBindJSON(&req); err != nil {
+		log.Printf("invalid input: %v", err)
+		c.JSON(400, gin.H{"error": "invalid input"})
+		return
+	}
+
+	err = s.userService.UpdateEmailAndUsername(c, req.Email, req.Username, userID)
+	if err != nil {
+		log.Printf("error updating user: %v", err)
+		c.JSON(500, gin.H{"error": serverError})
+		return
+	}
+	c.JSON(200, gin.H{"message": "update successful"})
 }

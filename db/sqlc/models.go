@@ -6,6 +6,7 @@ package db
 
 import (
 	"database/sql"
+	"time"
 
 	"github.com/google/uuid"
 )
@@ -29,8 +30,8 @@ type Investment struct {
 	Status       string       `json:"status"`
 	StartDate    sql.NullTime `json:"start_date"`
 	EndDate      sql.NullTime `json:"end_date"`
-	CreatedAt    sql.NullTime `json:"created_at"`
-	UpdatedAt    sql.NullTime `json:"updated_at"`
+	CreatedAt    time.Time    `json:"created_at"`
+	UpdatedAt    time.Time    `json:"updated_at"`
 }
 
 type InvestmentPlan struct {
@@ -65,14 +66,15 @@ type Saving struct {
 }
 
 type Transaction struct {
-	ID        int32          `json:"id"`
-	UserID    uuid.UUID      `json:"user_id"`
-	Amount    int32          `json:"amount"`
-	Type      string         `json:"type"`
-	Status    string         `json:"status"`
-	Reason    sql.NullString `json:"reason"`
-	CreatedAt sql.NullTime   `json:"created_at"`
-	UpdatedAt sql.NullTime   `json:"updated_at"`
+	ID           int32          `json:"id"`
+	UserID       uuid.UUID      `json:"user_id"`
+	Amount       int32          `json:"amount"`
+	InvestmentID uuid.NullUUID  `json:"investment_id"`
+	Type         string         `json:"type"`
+	Status       string         `json:"status"`
+	Reason       sql.NullString `json:"reason"`
+	CreatedAt    sql.NullTime   `json:"created_at"`
+	UpdatedAt    sql.NullTime   `json:"updated_at"`
 }
 
 type User struct {
@@ -84,6 +86,7 @@ type User struct {
 	TotalSavingsWithdrawn    int32          `json:"total_savings_withdrawn"`
 	TotalInvestmentAmount    int32          `json:"total_investment_amount"`
 	TotalInvestmentWithdrawn int32          `json:"total_investment_withdrawn"`
+	TotalTokens              int32          `json:"total_tokens"`
 	ReferenceID              string         `json:"reference_id"`
 	PasswordHash             string         `json:"password_hash"`
 	AccountNumber            sql.NullString `json:"account_number"`

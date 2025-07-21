@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"gold-savings/admin"
+	"gold-savings/admin/components"
 	"gold-savings/api"
 	"gold-savings/api/middleware"
 	db "gold-savings/db/sqlc"
@@ -68,6 +69,14 @@ func main() {
 
 	router.GET("/.well-known/appspecific/com.chrome.devtools.json", func(c *gin.Context) {
 		c.JSON(200, gin.H{"status": "ok"}) // or just return 204 No Content
+	})
+
+	router.GET("/", func(ctx *gin.Context) {
+		err := components.LandingPage().Render(ctx, ctx.Writer)
+		if err != nil {
+			ctx.String(404, "landing page component not found")
+			return
+		}
 	})
 
 	// Initialize API routes

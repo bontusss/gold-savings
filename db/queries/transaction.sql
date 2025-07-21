@@ -1,8 +1,8 @@
 -- name: CreateTransaction :one
 INSERT INTO transactions (
-  user_id, amount, type, status, reason
+  user_id, amount, type, investment_id, status, reason
 ) VALUES (
-  $1, $2, $3, $4, $5
+  $1, $2, $3, $4, $5, $6
 )
 RETURNING *;
 
@@ -32,9 +32,14 @@ WHERE user_id = $1
 ORDER BY created_at DESC;
 
 -- name: ListTransactionsByType :many
-SELECT * FROM transactions
-WHERE type = $1
-ORDER BY created_at DESC;
+SELECT
+  transactions.*,
+  users.username
+FROM transactions
+JOIN users ON users.id = transactions.user_id
+WHERE transactions.type = $1
+ORDER BY transactions.created_at DESC;
+
 
 -- name: UpdateTransactionStatus :exec
 UPDATE transactions
@@ -46,6 +51,25 @@ WHERE id = $1;
 -- name: GetRejectedTransactions :many
 SELECT * FROM transactions
 WHERE status = 'rejected';
+
+-- name: ListPendingTransactionsWithUser :many
+SELECT
+  t.id,
+  t.user_id,
+  t.amount,
+  t.type,
+  t.status,
+  t.reason,
+  t.created_at,
+  t.updated_at,
+  u.username,
+  u.email
+FROM transactions t
+JOIN users u ON t.user_id = u.id
+WHERE t.status = 'pending'
+ORDER BY t.created_at DESC;
+
+
 
 
 -- name: CreatePayoutRequest :one
@@ -69,6 +93,9 @@ ORDER BY created_at DESC;
 SELECT * FROM payout_requests
 WHERE category = $1
 ORDER BY created_at DESC;
+
+-- name: ListAllPayoutRequests :many
+SELECT * FROM payout_requests;
 
 -- name: ListPayoutRequestsByType :many
 SELECT * FROM payout_requests

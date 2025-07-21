@@ -51,6 +51,32 @@ WHERE id = $1;
 DELETE FROM investments
 WHERE id = $1;
 
+-- name: ListInvestmentsWithUserAndPlan :many
+SELECT
+  investments.id,
+  investments.reference_id,
+  investments.amount,
+  investments.interest,
+  investments.interest_rate,
+  investments.status,
+  investments.start_date,
+  investments.end_date,
+  investments.created_at,
+  investments.updated_at,
+
+  users.id AS user_id,
+  users.username,
+  users.email,
+
+  investment_plans.id AS plan_id,
+  investment_plans.name AS plan_name
+
+FROM investments
+JOIN users ON users.id = investments.user_id
+JOIN investment_plans ON investment_plans.id = investments.plan_id
+ORDER BY investments.created_at DESC;
+
+
 -- name: CreateSavings :one
 INSERT INTO savings (
   user_id, amount

@@ -52,6 +52,13 @@ SET email_verified = $2,
     updated_at = NOW()
 WHERE id = $1;
 
+-- name: UpdateUsernameEmail :exec
+UPDATE users
+SET email = $2,
+    username = $3,
+    updated_at = NOW()
+WHERE id = $1;
+
 -- name: UpdateUserTotalSavings :exec
 UPDATE users
 SET total_savings = $2,
@@ -63,8 +70,34 @@ SELECT total_savings
 FROM users
 WHERE id = $1;
 
+-- name: GetUserTokens :one
+SELECT total_tokens
+FROM users
+WHERE id = $1;
+
+-- name: GetUserInvestmentBalance :one
+SELECT total_investment_amount
+FROM users
+WHERE id = $1;
+
 -- name: UpdateUserTotalInvestmentBalance :exec
 UPDATE users
 SET total_investment_amount = $2,
     updated_at = NOW()
 WHERE id = $1;
+
+-- name: GetTotalSavingsInApp :one
+SELECT COALESCE(SUM(total_savings), 0)::INTEGER AS total FROM users;
+
+-- name: GetTotalInvestmentInApp :one
+SELECT COALESCE(SUM(total_investment_amount), 0)::INTEGER AS total FROM users;
+
+-- name: GetTotalTokens :one
+SELECT COALESCE(SUM(total_tokens), 0)::INTEGER AS total FROM users;
+
+-- name: ListUsersByTotalSavingsDesc :many
+SELECT *
+FROM users
+WHERE total_savings > 0
+ORDER BY total_savings DESC
+LIMIT 10;

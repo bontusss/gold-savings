@@ -8,7 +8,34 @@ package components
 import "github.com/a-h/templ"
 import templruntime "github.com/a-h/templ/runtime"
 
-func DashboardT(activeUsersCount int64) templ.Component {
+import (
+	"fmt"
+	"github.com/dustin/go-humanize"
+	"gold-savings/db/sqlc"
+	"strconv"
+)
+
+func formatCurrency(n int) string {
+	v := humanize.Comma(int64(n)) // "1,000,000"
+	fmt.Println("vint is", v)
+	return v
+}
+
+func FormatCurrencyFromString(amountStr string) string {
+	f, err := strconv.ParseFloat(amountStr, 64)
+	if err != nil {
+		return amountStr
+	}
+	return humanize.CommafWithDigits(f, 0) // rounds to whole number with commas
+}
+
+func DashboardT(activeUsersCount int64,
+	ts, ia, tt int32, topUsers []db.User, plans []db.InvestmentPlan,
+	reqs []db.PayoutRequest,
+	trans []db.ListPendingTransactionsWithUserRow,
+	inv []db.ListInvestmentsWithUserAndPlanRow,
+	savings []db.ListTransactionsByTypeRow,
+) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
 		if templ_7745c5c3_CtxErr := ctx.Err(); templ_7745c5c3_CtxErr != nil {
@@ -41,13 +68,635 @@ func DashboardT(activeUsersCount int64) templ.Component {
 				}()
 			}
 			ctx = templ.InitializeContext(ctx)
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<aside class=\"app-sidebar\" id=\"sidebar\"><!-- Start::main-sidebar-header --><div class=\"main-sidebar-header\"><h2 class=\"text-white\">Gold Savings</h2></div><!-- End::main-sidebar-header --><!-- Start::main-sidebar --><div class=\"main-sidebar \" id=\"sidebar-scroll\"><!-- Start::nav --><nav class=\"main-menu-container nav nav-pills flex-column sub-open\"><div class=\"slide-left\" id=\"slide-left\"><svg xmlns=\"http://www.w3.org/2000/svg\" fill=\"#7b8191\" width=\"24\" height=\"24\" viewBox=\"0 0 24 24\"><path d=\"M13.293 6.293 7.586 12l5.707 5.707 1.414-1.414L10.414 12l4.293-4.293z\"></path></svg></div><ul class=\"main-menu\"><!-- Start::slide__category --><li class=\"slide__category\"><span class=\"category-name\">Main</span></li><!-- End::slide__category --><!-- Start::slide --><li class=\"slide\"><a href=\"javascript:void(0);\" class=\"side-menu__item\"><i class=\"ri-home-8-line side-menu__icon\"></i> <span class=\"side-menu__label\">Dashboards</span></a></li><!-- End::slide --><!-- Start::slide --><li class=\"slide\"><a href=\"widgets.html\" class=\"side-menu__item\"><i class=\"ri-apps-2-line side-menu__icon\"></i> <span class=\"side-menu__label\">Widgets</span></a></li><!-- End::slide --><!-- Start::slide__category --><li class=\"slide__category\"><span class=\"category-name\">General</span></li><!-- End::slide__category --><!-- Start::slide --><li class=\"slide has-sub\"><a href=\"javascript:void(0);\" class=\"side-menu__item\"><i class=\"ri-inbox-line side-menu__icon\"></i> <span class=\"side-menu__label\">Plans</span> <i class=\"ri ri-arrow-right-s-line side-menu__angle\"></i></a><ul class=\"slide-menu child1\"><li class=\"slide side-menu__label1\"><a href=\"javascript:void(0)\">List Savings</a></li><li class=\"slide\"><a hx-get=\"/admin/api/plan\" hx-target=\"#main-content\" class=\"side-menu__item\">Create Plan</a></li><li class=\"slide\"><a hx-get=\"/\" class=\"side-menu__item\">Update Savings</a></li></ul></li><!-- End::slide --><!-- Start::slide --><li class=\"slide has-sub\"><a href=\"javascript:void(0);\" class=\"side-menu__item\"><i class=\"ri-cpu-line side-menu__icon\"></i> <span class=\"side-menu__label\">Users</span> <i class=\"ri ri-arrow-right-s-line side-menu__angle\"></i></a><ul class=\"slide-menu child1\"><li class=\"slide side-menu__label1\"><a href=\"javascript:void(0)\">Create New User</a></li><li class=\"slide\"><a hx-get=\"/admin/api/users\" hx-target=\"#main-content\" class=\"side-menu__item\">List Users</a></li></ul></li><!-- End::slide --><!-- Start::slide --><li class=\"slide has-sub\"><a href=\"javascript:void(0);\" class=\"side-menu__item\"><i class=\"ri-file-text-line side-menu__icon\"></i> <span class=\"side-menu__label\">Transactions</span> <i class=\"ri ri-arrow-right-s-line side-menu__angle\"></i></a><ul class=\"slide-menu child1\"><li class=\"slide side-menu__label1\"><a href=\"javascript:void(0)\">List Transaction</a></li><li class=\"slide\"><a href=\"form-elements.html\" class=\"side-menu__item\">Pending Transactions</a></li></ul></li><!-- End::slide --><!-- Start::slide --><li class=\"slide has-sub\"><a href=\"javascript:void(0);\" class=\"side-menu__item\"><i class=\"ri-stack-line side-menu__icon\"></i> <span class=\"side-menu__label\">Tokens</span> <i class=\"ri ri-arrow-right-s-line side-menu__angle\"></i></a><ul class=\"slide-menu child1\"><li class=\"slide side-menu__label1\"><a href=\"javascript:void(0)\">Configure Tokens</a></li><li class=\"slide\"><a href=\"rangeslider.html\" class=\"side-menu__item\">Conversion Settings</a></li></ul></li><!-- End::slide --><!-- Start::slide --><li class=\"slide has-sub\"><a href=\"javascript:void(0);\" class=\"side-menu__item\"><i class=\"ri-file-list-3-line side-menu__icon\"></i> <span class=\"side-menu__label\">Referral Management</span> <i class=\"ri ri-arrow-right-s-line side-menu__angle\"></i></a><ul class=\"slide-menu child1\"><li class=\"slide side-menu__label1\"><a href=\"javascript:void(0)\">Configure Rewards</a></li><li class=\"slide\"><a href=\"dropdown.html\" class=\"side-menu__item\">Top Referrals</a></li></ul></li><!-- End::slide --><!-- Start::slide__category --><li class=\"slide__category\"><span class=\"category-name\">System</span></li><!-- End::slide__category --><!-- Start::slide --><li class=\"slide has-sub\"><a href=\"javascript:void(0);\" class=\"side-menu__item\"><i class=\"ri-node-tree side-menu__icon\"></i> <span class=\"side-menu__label\">Configurations</span> <i class=\"ri ri-arrow-right-s-line side-menu__angle\"></i></a><ul class=\"slide-menu child1\"><li class=\"slide side-menu__label1\"><a href=\"javascript:void(0)\">Interet Management</a></li><li class=\"slide\"><a href=\"javascript:void(0);\" class=\"side-menu__item\">Nested-1</a></li></ul></li><!-- End::slide --></ul><div class=\"slide-right\" id=\"slide-right\"><svg xmlns=\"http://www.w3.org/2000/svg\" fill=\"#7b8191\" width=\"24\" height=\"24\" viewBox=\"0 0 24 24\"><path d=\"M10.707 17.707 16.414 12l-5.707-5.707-1.414 1.414L13.586 12l-4.293 4.293z\"></path></svg></div></nav><!-- End::nav --></div><!-- End::main-sidebar --></aside><!-- Start::Header --> <header class=\"header custom-sticky !top-0 !w-full\"><nav class=\"main-header\" aria-label=\"Global\"><div class=\"header-content\"><div class=\"header-left\"><!-- Navigation Toggle --><div class=\"\"><button type=\"button\" class=\"sidebar-toggle !w-100 !h-100\"><span class=\"sr-only\">Toggle Navigation</span> <i class=\"ri-arrow-right-circle-line header-icon\"></i></button></div><!-- End Navigation Toggle --></div><div class=\"responsive-logo\"><h2 class=\"text-black text-4xl\">Gold Savings</h2></div><div class=\"header-right\"><div class=\"responsive-headernav\"><div class=\"header-nav-right\"><div class=\"header-theme-mode hidden sm:block\"><a aria-label=\"anchor\" class=\"hs-dark-mode-active:hidden flex hs-dark-mode group flex-shrink-0 justify-center items-center gap-2 h-[2.375rem] w-[2.375rem] rounded-full font-medium bg-gray-100 hover:bg-gray-200 text-gray-500 align-middle focus:outline-none focus:ring-0 focus:ring-gray-400 focus:ring-offset-0 focus:ring-offset-white transition-all text-xs dark:bg-bgdark dark:hover:bg-black/20 dark:text-white/70 dark:hover:text-white dark:focus:ring-white/10 dark:focus:ring-offset-white/10\" href=\"javascript:;\" data-hs-theme-click-value=\"dark\"><i class=\"ri-moon-line header-icon\"></i></a> <a aria-label=\"anchor\" class=\"hs-dark-mode-active:flex hidden hs-dark-mode group flex-shrink-0 justify-center items-center gap-2 h-[2.375rem] w-[2.375rem] rounded-full font-medium bg-gray-100 hover:bg-gray-200 text-gray-500 align-middle focus:outline-none focus:ring-0 focus:ring-gray-400 focus:ring-offset-0 focus:ring-offset-white transition-all text-xs dark:bg-bgdark dark:hover:bg-black/20 dark:text-white/70 dark:hover:text-white dark:focus:ring-white/10 dark:focus:ring-offset-white/10\" href=\"javascript:;\" data-hs-theme-click-value=\"light\"><i class=\"ri-sun-line header-icon\"></i></a></div><div class=\"header-notification hs-dropdown ti-dropdown hidden sm:block\" data-hs-dropdown-placement=\"bottom-right\"><button id=\"dropdown-notification\" type=\"button\" class=\"hs-dropdown-toggle ti-dropdown-toggle p-0 border-0 flex-shrink-0 h-[2.375rem] w-[2.375rem] rounded-full shadow-none focus:ring-gray-400 text-xs dark:focus:ring-white/10\"><i class=\"ri-notification-2-line header-icon animate-bell\"></i> <span class=\"flex absolute h-5 w-5 top-0 ltr:right-0 rtl:left-0 -mt-1 ltr:-mr-1 rtl:-ml-1\"><span class=\"animate-ping absolute inline-flex h-full w-full rounded-full bg-success/80 opacity-75\"></span> <span class=\"relative inline-flex rounded-full h-5 w-5 bg-success text-white justify-center items-center\" id=\"notify-data\">4</span></span></button><div class=\"hs-dropdown-menu ti-dropdown-menu w-[20rem] border-0\" aria-labelledby=\"dropdown-notification\"><div class=\"ti-dropdown-header !bg-primary border-b dark:border-white/10 flex justify-between items-center\"><p class=\"ti-dropdown-header-title !text-white font-semibold\">Notifications</p><a href=\"javascript:void(0)\" class=\"badge bg-black/20 text-white rounded-sm\">Mark All Read</a></div><div class=\"ti-dropdown-divider divide-y divide-gray-200 dark:divide-white/10\"><div class=\"py-2 first:pt-0 last:pb-0\" id=\"allNotifyContainer\"><div class=\"ti-dropdown-item relative header-box\"><a href=\"mail-inbox.html\" class=\"flex space-x-3 rtl:space-x-reverse\"><div class=\"ltr:mr-2 rtl:ml-2 avatar rounded-full ring-0\"><img src=\"/static/img/users/17.jpg\" alt=\"img\" class=\"rounded-sm\"></div><div class=\"relative w-full\"><h5 class=\"text-sm text-gray-800 dark:text-white font-semibold mb-1\">Elon Isk</h5><p class=\"text-xs mb-1 max-w-[200px] truncate\">Hello there! How are you doing? Call me when...</p><p class=\"text-xs text-gray-400 dark:text-white/70\">2 min</p></div></a> <a aria-label=\"anchor\" href=\"javascript:void(0);\" class=\"header-remove-btn ltr:ml-auto rtl:mr-auto text-lg text-gray-500/20 dark:text-white/20 hover:text-gray-800 dark:hover:text-white\"><i class=\"ri-close-circle-line\"></i></a></div><div class=\"ti-dropdown-item relative header-box\"><a href=\"mail-inbox.html\" class=\"flex items-center space-x-3 rtl:space-x-reverse\"><div class=\"ltr:mr-2 rtl:ml-2 avatar rounded-full ring-0\"><img src=\"/static/img/users/2.jpg\" alt=\"img\" class=\"rounded-sm\"></div><div class=\"relative w-full\"><h5 class=\"text-sm text-gray-800 dark:text-white font-semibold mb-1\">Shakira Sen</h5><p class=\"text-xs mb-1 max-w-[200px] truncate\">I would like to discuss about that static...</p><p class=\"text-xs text-gray-400 dark:text-white/70\">09:43</p></div></a> <a aria-label=\"anchor\" href=\"javascript:void(0);\" class=\"header-remove-btn ltr:ml-auto rtl:mr-auto text-lg text-gray-500/20 dark:text-white/20 hover:text-gray-800 dark:hover:text-white\"><i class=\"ri-close-circle-line\"></i></a></div><div class=\"ti-dropdown-item relative header-box\"><a href=\"mail-inbox.html\" class=\"flex items-center space-x-3 rtl:space-x-reverse\"><div class=\"ltr:mr-2 rtl:ml-2 avatar rounded-full ring-0\"><img src=\"/static/img/users/21.jpg\" alt=\"img\" class=\"rounded-sm\"></div><div class=\"relative w-full\"><h5 class=\"text-sm text-gray-800 dark:text-white font-semibold mb-1\">Sebastian</h5><p class=\"text-xs mb-1 max-w-[200px] truncate\">Shall we go to the cafe at downtown...</p><p class=\"text-xs text-gray-400 dark:text-white/70\">yesterday</p></div></a> <a aria-label=\"anchor\" href=\"javascript:void(0);\" class=\"header-remove-btn ltr:ml-auto rtl:mr-auto text-lg text-gray-500/20 dark:text-white/20 hover:text-gray-800 dark:hover:text-white\"><i class=\"ri-close-circle-line\"></i></a></div><div class=\"ti-dropdown-item relative header-box\"><a href=\"mail-inbox.html\" class=\"flex items-center space-x-3 rtl:space-x-reverse\"><div class=\"ltr:mr-2 rtl:ml-2 avatar rounded-full ring-0\"><img src=\"/static/img/users/11.jpg\" alt=\"img\" class=\"rounded-sm\"></div><div class=\"relative w-full\"><h5 class=\"text-sm text-gray-800 dark:text-white font-semibold mb-1\">Charlie Davieson</h5><p class=\"text-xs mb-1 max-w-[200px] truncate\">Lorem ipsum dolor sit amet, consectetur</p><p class=\"text-xs text-gray-400 dark:text-white/70\">yesterday</p></div></a> <a aria-label=\"anchor\" href=\"javascript:void(0);\" class=\"header-remove-btn ltr:ml-auto rtl:mr-auto text-lg text-gray-500/20 dark:text-white/20 hover:text-gray-800 dark:hover:text-white\"><i class=\"ri-close-circle-line\"></i></a></div></div><div class=\"py-2 first:pt-0 px-5\"><a class=\"w-full ti-btn ti-btn-primary p-2\" href=\"mail-inbox.html\">View All</a></div></div></div></div><div class=\"header-profile hs-dropdown ti-dropdown\" data-hs-dropdown-placement=\"bottom-right\"><button id=\"dropdown-profile\" type=\"button\" class=\"hs-dropdown-toggle ti-dropdown-toggle gap-2 p-0 flex-shrink-0 h-8 w-8 rounded-full shadow-none focus:ring-gray-400 text-xs dark:focus:ring-white/10\"><img class=\"inline-block rounded-full ring-2 ring-white dark:ring-white/10\" src=\"/static/img/users/1.jpg\" alt=\"Image Description\"></button><div class=\"hs-dropdown-menu ti-dropdown-menu border-0 w-[20rem]\" aria-labelledby=\"dropdown-profile\"><div class=\"ti-dropdown-header !bg-primary flex\"><div class=\"ltr:mr-3 rtl:ml-3\"><img class=\"avatar shadow-none rounded-full !ring-transparent\" src=\"/static/img/users/1.jpg\" alt=\"profile-img\"></div><div><p class=\"ti-dropdown-header-title !text-white\">Json Taylor</p><p class=\"ti-dropdown-header-content !text-white/50\">Web Designer</p></div></div><div class=\"mt-2 ti-dropdown-divider\"><a href=\"profile.html\" class=\"ti-dropdown-item\"><i class=\"ti ti-user-circle text-lg\"></i> Profile</a> <a href=\"mail-inbox.html\" class=\"ti-dropdown-item\"><i class=\"ti ti-inbox text-lg\"></i> Inbox</a> <a href=\"tasks.html\" class=\"ti-dropdown-item\"><i class=\"ti ti-clipboard-check text-lg\"></i> Task Manager</a> <a href=\"profile-settings.html\" class=\"ti-dropdown-item\"><i class=\"ti ti-adjustments-horizontal text-lg\"></i> Settings</a> <a href=\"index3.html\" class=\"ti-dropdown-item\"><i class=\"ti ti-wallet text-lg\"></i> Bal: $7,12,950</a> <a href=\"signin.html\" class=\"ti-dropdown-item\"><i class=\"ti ti-logout  text-lg\"></i> Log Out</a></div></div></div></div></div></div></div></nav></header><!-- End::Header --> <div class=\"content\"><!-- Start::main-content --><div class=\"main-content\" id=\"main-content\"><!-- Page Header --><div class=\"block justify-between page-header md:flex\"><div><h3 class=\"text-gray-700 hover:text-gray-900 dark:text-white dark:hover:text-white text-2xl font-medium\">Dashboard</h3></div><ol class=\"flex items-center whitespace-nowrap min-w-0\"><li class=\"text-sm\"><a class=\"flex items-center font-semibold text-primary hover:text-primary dark:text-primary truncate\" href=\"javascript:void(0);\">Home <i class=\"ti ti-chevrons-right flex-shrink-0 mx-3 overflow-visible text-gray-300 dark:text-gray-300 rtl:rotate-180\"></i></a></li><li class=\"text-sm text-gray-500 hover:text-primary dark:text-white/70 \" aria-current=\"page\">Dashboard</li></ol></div><!-- Page Header Close --><!-- Start::row-1 --><div class=\"grid grid-cols-12 gap-x-5\"><div class=\"col-span-12 md:col-span-6 xxl:col-span-3\"><div class=\"box overflow-hidden\"><div class=\"box-body\"><div class=\"flex\"><div class=\"flex space-x-3 rtl:space-x-reverse\"><div class=\"avatar p-2 rounded-sm bg-primary/10\"><svg class=\"fill-primary\" xmlns=\"http://www.w3.org/2000/svg\" enable-background=\"new 0 0 24 24\" viewBox=\"0 0 24 24\"><path class=\"fill-primary\" d=\"M9,10h2.5c0.276123,0,0.5-0.223877,0.5-0.5S11.776123,9,11.5,9H10V8c0-0.276123-0.223877-0.5-0.5-0.5S9,7.723877,9,8v1c-1.1045532,0-2,0.8954468-2,2s0.8954468,2,2,2h1c0.5523071,0,1,0.4476929,1,1s-0.4476929,1-1,1H7.5C7.223877,15,7,15.223877,7,15.5S7.223877,16,7.5,16H9v1.0005493C9.0001831,17.2765503,9.223999,17.5001831,9.5,17.5h0.0006104C9.7765503,17.4998169,10.0001831,17.276001,10,17v-1c1.1045532,0,2-0.8954468,2-2s-0.8954468-2-2-2H9c-0.5523071,0-1-0.4476929-1-1S8.4476929,10,9,10z M21.5,12H17V2.5c0.000061-0.0875244-0.0228882-0.1735229-0.0665283-0.2493896c-0.1375732-0.2393188-0.4431152-0.3217773-0.6824951-0.1842041l-3.2460327,1.8603516L9.7481079,2.0654297c-0.1536865-0.0878906-0.3424072-0.0878906-0.4960938,0l-3.256897,1.8613281L2.7490234,2.0664062C2.6731567,2.0227661,2.5871582,1.9998779,2.4996338,1.9998779C2.2235718,2.000061,1.9998779,2.223938,2,2.5v17c0.0012817,1.380188,1.119812,2.4987183,2.5,2.5H19c1.6561279-0.0018311,2.9981689-1.3438721,3-3v-6.5006104C21.9998169,12.2234497,21.776001,11.9998169,21.5,12z M4.5,21c-0.828064-0.0009155-1.4990845-0.671936-1.5-1.5V3.3623047l2.7412109,1.5712891c0.1575928,0.0872192,0.348877,0.0875854,0.5068359,0.0009766L9.5,3.0761719l3.2519531,1.8583984c0.157959,0.0866089,0.3492432,0.0862427,0.5068359-0.0009766L16,3.3623047V19c0.0008545,0.7719116,0.3010864,1.4684448,0.7803345,2H4.5z M21,19c0,1.1045532-0.8954468,2-2,2s-2-0.8954468-2-2v-6h4V19z\"></path></svg></div><h6 class=\"text-lg font-medium text-gray-800 mb-2 dark:text-white my-auto\">Total Active Users</h6></div><span class=\"badge bg-primary/10 text-primary py-1 ltr:ml-auto rtl:mr-auto !my-auto\"><i class=\"ti ti-trending-up\"></i> 20%</span></div><div class=\"mt-2\"><h2 class=\"text-2xl font-semibold text-gray-800 dark:text-white\"></h2><p class=\"text-xs text-gray-400 \">in last week</p></div></div></div></div><div class=\"col-span-12 md:col-span-6 xxl:col-span-3\"><div class=\"box overflow-hidden\"><div class=\"box-body\"><div class=\"flex\"><div class=\"flex space-x-3 rtl:space-x-reverse\"><div class=\"avatar p-2 rounded-sm bg-secondary/10\"><svg class=\"fill-secondary\" xmlns=\"http://www.w3.org/2000/svg\" enable-background=\"new 0 0 24 24\" viewBox=\"0 0 24 24\"><path class=\"fill-secondary\" d=\"M9.5,7h7C16.776123,7,17,6.776123,17,6.5S16.776123,6,16.5,6h-7C9.223877,6,9,6.223877,9,6.5S9.223877,7,9.5,7z M7.5,11h9c0.276123,0,0.5-0.223877,0.5-0.5S16.776123,10,16.5,10h-9C7.223877,10,7,10.223877,7,10.5S7.223877,11,7.5,11z M20.5,2H3.4993896C3.2234497,2.0001831,2.9998169,2.223999,3,2.5v19c-0.000061,0.1124268,0.0378418,0.2216187,0.1074829,0.3098755c0.1710205,0.2167358,0.4853516,0.2537231,0.7020874,0.0827026l2.8652344-2.2617188l2.3583984,1.7695312c0.1777954,0.1328125,0.421814,0.1328125,0.5996094,0L12,19.625l2.3671875,1.7753906c0.1777954,0.1328125,0.421814,0.1328125,0.5996094,0l2.3583984-1.7695312l2.8652344,2.2617188C20.2785034,21.9623413,20.3876343,22.0002441,20.5,22h0.0006104C20.7766113,21.9998169,21.0001831,21.7759399,21,21.5V2.4993896C20.9998169,2.2234497,20.776001,1.9998169,20.5,2z M20,20.46875l-2.3574219-1.8613281c-0.0882568-0.069519-0.1972656-0.1072998-0.3095703-0.1074219c-0.1080933-0.000061-0.2132568,0.0349121-0.2998047,0.0996094L14.6669922,20.375l-2.3671875-1.7753906c-0.1777954-0.1328125-0.421814-0.1328125-0.5996094,0L9.3330078,20.375l-2.3662109-1.7753906c-0.1817017-0.1348877-0.4311523-0.1317139-0.609375,0.0078125L4,20.46875V3h16V20.46875z M7.5,15h9c0.276123,0,0.5-0.223877,0.5-0.5S16.776123,14,16.5,14h-9C7.223877,14,7,14.223877,7,14.5S7.223877,15,7.5,15z\"></path></svg></div><h6 class=\"text-lg font-medium text-gray-800 mb-2 dark:text-white my-auto\">Total Savings</h6></div><span class=\"badge bg-secondary/10 text-secondary py-1 ltr:ml-auto rtl:mr-auto !my-auto\"><i class=\"ti ti-trending-up\"></i> 1.8%</span></div><div class=\"mt-2\"><h2 class=\"text-2xl font-semibold text-gray-800 dark:text-white\">₦</h2><p class=\"text-xs text-gray-400 \">in last week</p></div></div></div></div><div class=\"col-span-12 md:col-span-6 xxl:col-span-3\"><div class=\"box overflow-hidden\"><div class=\"box-body\"><div class=\"flex\"><div class=\"flex space-x-3 rtl:space-x-reverse\"><div class=\"avatar p-2 rounded-sm bg-warning/10\"><svg class=\"fill-warning\" xmlns=\"http://www.w3.org/2000/svg\" enable-background=\"new 0 0 24 24\" viewBox=\"0 0 24 24\" id=\"shopping-bag\"><path class=\"fill-warning\" fill=\"#4B5563\" d=\"M19.5,7H16V5.9169922c0-2.2091064-1.7908325-4-4-4s-4,1.7908936-4,4V7H4.5C4.4998169,7,4.4996338,7,4.4993896,7C4.2234497,7.0001831,3.9998169,7.223999,4,7.5V19c0.0018311,1.6561279,1.3438721,2.9981689,3,3h10c1.6561279-0.0018311,2.9981689-1.3438721,3-3V7.5c0-0.0001831,0-0.0003662,0-0.0006104C19.9998169,7.2234497,19.776001,6.9998169,19.5,7z M9,5.9169922c0-1.6568604,1.3431396-3,3-3s3,1.3431396,3,3V7H9V5.9169922z M19,19c-0.0014038,1.1040039-0.8959961,1.9985962-2,2H7c-1.1040039-0.0014038-1.9985962-0.8959961-2-2V8h3v2.5C8,10.776123,8.223877,11,8.5,11S9,10.776123,9,10.5V8h6v2.5c0,0.0001831,0,0.0003662,0,0.0005493C15.0001831,10.7765503,15.223999,11.0001831,15.5,11c0.0001831,0,0.0003662,0,0.0006104,0C15.7765503,10.9998169,16.0001831,10.776001,16,10.5V8h3V19z\"></path></svg></div><h6 class=\"text-lg font-medium text-gray-800 mb-2 dark:text-white my-auto\">Pending Actions</h6></div><span class=\"badge bg-warning/10 text-warning py-1 ltr:ml-auto rtl:mr-auto !my-auto\"><i class=\"ti ti-trending-down\"></i> 1.8%</span></div><div class=\"mt-2\"><h2 class=\"text-2xl font-semibold text-gray-800 dark:text-white\">78</h2><p class=\"text-xs text-gray-400 \">in last week</p></div></div></div></div><div class=\"col-span-12 md:col-span-6 xxl:col-span-3\"><div class=\"box overflow-hidden\"><div class=\"box-body\"><div class=\"flex\"><div class=\"flex space-x-3 rtl:space-x-reverse\"><div class=\"avatar p-2 rounded-sm bg-success/10\"><svg class=\"fill-success\" xmlns=\"http://www.w3.org/2000/svg\" enable-background=\"new 0 0 24 24\" viewBox=\"0 0 24 24\"><path class=\"fill-success\" d=\"M10.75,8H12h0.0006104H15.5C15.776123,8,16,7.776123,16,7.5S15.776123,7,15.5,7h-3V5.5C12.5,5.223877,12.276123,5,12,5s-0.5,0.223877-0.5,0.5V7h-0.75C9.2312012,7,8,8.2312012,8,9.75s1.2312012,2.75,2.75,2.75h2.5c0.9664917,0,1.75,0.7835083,1.75,1.75S14.2164917,16,13.25,16H8.5C8.223877,16,8,16.223877,8,16.5S8.223877,17,8.5,17h3v1.5c0,0.0001831,0,0.0003662,0,0.0005493C11.5001831,18.7765503,11.723999,19.0001831,12,19c0.0001831,0,0.0003662,0,0.0006104,0c0.2759399-0.0001831,0.4995728-0.223999,0.4993896-0.5V17h0.75c1.5187988,0,2.75-1.2312012,2.75-2.75s-1.2312012-2.75-2.75-2.75h-2.5C9.7835083,11.5,9,10.7164917,9,9.75S9.7835083,8,10.75,8z M12,1C5.9248657,1,1,5.9248657,1,12s4.9248657,11,11,11c6.0722656-0.0068359,10.9931641-4.9277344,11-11C23,5.9248657,18.0751343,1,12,1z M12,22C6.4771729,22,2,17.5228271,2,12S6.4771729,2,12,2c5.5201416,0.0064697,9.9935303,4.4798584,10,10C22,17.5228271,17.5228271,22,12,22z\"></path></svg></div><h6 class=\"text-lg font-medium text-gray-800 mb-2 dark:text-white my-auto\">Token Economy</h6></div><span class=\"badge bg-success/10 text-success py-1 ltr:ml-auto rtl:mr-auto !my-auto\"><i class=\"ti ti-trending-up\"></i> 1.2%</span></div><div class=\"mt-2\"><h2 class=\"text-2xl font-semibold text-gray-800 dark:text-white\">₦35,262</h2><p class=\"text-xs text-gray-400 \">in last week</p></div></div></div></div></div><div class=\"grid grid-cols-12 gap-x-5\"><div class=\"col-span-12 lg:col-span-12 xxl:col-span-6\"><div class=\"box\"><div class=\"box-header\"><div class=\"flex\"><h5 class=\"box-title my-auto\">Plan Completion Rate</h5><div class=\"hs-dropdown ti-dropdown block ltr:ml-auto rtl:mr-auto my-auto\"><button type=\"button\" aria-label=\"button\" class=\"hs-dropdown-toggle ti-dropdown-toggle rounded-sm p-2 bg-white !border border-gray-200 text-gray-500 hover:bg-gray-100  focus:ring-gray-200 dark:bg-black/20 dark:hover:bg-black/30 dark:border-white/10 dark:hover:border-white/20 dark:focus:ring-white/10 dark:focus:ring-offset-white/10\"><i class=\"text-sm leading-none ti ti-dots-vertical\"></i></button><div class=\"hs-dropdown-menu ti-dropdown-menu\"><a class=\"ti-dropdown-item\" href=\"javascript:void(0)\">Download</a> <a class=\"ti-dropdown-item\" href=\"javascript:void(0)\">Import</a> <a class=\"ti-dropdown-item\" href=\"javascript:void(0)\">Export</a></div></div></div></div><div class=\"box-body\"><ul class=\"flex flex-wrap sm:space-x-6 sm:rtl:space-x-reverse\"><li><p class=\"inline-flex items-center\"><span class=\"block w-3 h-3 rounded-full ltr:mr-2 rtl:ml-2 border-4 border-primary pointer-events-none\"></span> <span class=\"flex items-center\"><span class=\"text-2xl text-gray-800 dark:text-white font-semibold ltr:mr-2 rtl:ml-2 pointer-events-none\">$9.65K</span> <span class=\"text-sm text-gray-400 dark:text-white/80\">/ Deposits</span></span></p></li><li><p class=\"inline-flex items-center\"><span class=\"block w-3 h-3 rounded-full ltr:mr-2 rtl:ml-2 border-4 border-gray-200 pointer-events-none\"></span> <span class=\"flex items-center\"><span class=\"text-2xl text-gray-800 dark:text-white font-semibold ltr:mr-2 rtl:ml-2 pointer-events-none\">$3.75K</span> <span class=\"text-sm text-gray-400 dark:text-white/80\">/ Withdrawals</span></span></p></li></ul><div id=\"salesOverview\"></div></div></div></div><div class=\"col-span-12 lg:col-span-6 xxl:col-span-3\"><div class=\"box\"><div class=\"box-header\"><div class=\"flex\"><h5 class=\"box-title my-auto\">Top Members</h5><div class=\"hs-dropdown ti-dropdown block ltr:ml-auto rtl:mr-auto my-auto\"><button type=\"button\" aria-label=\"button\" class=\"hs-dropdown-toggle ti-dropdown-toggle rounded-sm p-2 bg-white !border border-gray-200 text-gray-500 hover:bg-gray-100  focus:ring-gray-200 dark:bg-black/20 dark:hover:bg-black/30 dark:border-white/10 dark:hover:border-white/20 dark:focus:ring-white/10 dark:focus:ring-offset-white/10\"><i class=\"text-sm leading-none ti ti-dots-vertical\"></i></button><div class=\"hs-dropdown-menu ti-dropdown-menu\"><a class=\"ti-dropdown-item\" href=\"javascript:void(0)\">Download</a> <a class=\"ti-dropdown-item\" href=\"javascript:void(0)\">Import</a> <a class=\"ti-dropdown-item\" href=\"javascript:void(0)\">Export</a></div></div></div></div><div class=\"box-body\"><ul class=\"flex flex-col\"><li class=\"px-0 pt-0 ti-list-group border-0 text-gray-800 dark:text-white\"><a href=\"javascript:void(0);\" class=\"flex  justify-between items-center w-full\"><div class=\"flex space-x-3 rtl:space-x-reverse w-full\"><img class=\"avatar avatar-sm rounded-sm\" src=\"/static/img/users/2.jpg\" alt=\"Image Description\"><div class=\"flex w-full\"><div class=\"block my-auto\"><p class=\"block text-sm font-semibold text-gray-800 hover:text-gray-900 my-auto  dark:text-white dark:hover:text-gray-200\">Socrates Itumay</p><p class=\"text-xs text-gray-400 dark:text-white/80 truncate sm:max-w-max max-w-[100px] font-normal\">15 Purchases</p></div></div></div><div class=\"\"><span class=\"text-sm font-medium\">$1,835</span></div></a></li><li class=\"px-0 pt-3 ti-list-group border-0 text-gray-800 dark:text-white\"><a href=\"javascript:void(0);\" class=\"flex  justify-between items-center w-full\"><div class=\"flex space-x-3 rtl:space-x-reverse w-full\"><img class=\"avatar avatar-sm rounded-sm\" src=\"/static/img/users/3.jpg\" alt=\"Image Description\"><div class=\"flex w-full\"><div class=\"block my-auto\"><p class=\"block text-sm font-semibold text-gray-800 hover:text-gray-900 my-auto  dark:text-white dark:hover:text-gray-200\">Json Taylor</p><p class=\"text-xs text-gray-400 dark:text-white/80 truncate sm:max-w-max max-w-[100px] font-normal\">18 Purchases</p></div></div></div><div class=\"\"><span class=\"text-sm font-medium\">$2,415</span></div></a></li><li class=\"px-0 pt-3 ti-list-group border-0 text-gray-800 dark:text-white\"><a href=\"javascript:void(0);\" class=\"flex  justify-between items-center w-full\"><div class=\"flex space-x-3 rtl:space-x-reverse w-full\"><img class=\"avatar avatar-sm rounded-sm\" src=\"/static/img/users/4.jpg\" alt=\"Image Description\"><div class=\"flex w-full\"><div class=\"block my-auto\"><p class=\"block text-sm font-semibold text-gray-800 hover:text-gray-900 my-auto  dark:text-white dark:hover:text-gray-200\">Suzika Stallone</p><p class=\"text-xs text-gray-400 dark:text-white/80 truncate sm:max-w-max max-w-[100px] font-normal\">21 Purchases</p></div></div></div><div class=\"\"><span class=\"text-sm font-medium\">$2,341</span></div></a></li><li class=\"px-0 pt-3 ti-list-group border-0 text-gray-800 dark:text-white\"><a href=\"javascript:void(0);\" class=\"flex  justify-between items-center w-full\"><div class=\"flex space-x-3 rtl:space-x-reverse w-full\"><img class=\"avatar avatar-sm rounded-sm\" src=\"/static/img/users/5.jpg\" alt=\"Image Description\"><div class=\"flex w-full\"><div class=\"block my-auto\"><p class=\"block text-sm font-semibold text-gray-800 hover:text-gray-900 my-auto  dark:text-white dark:hover:text-gray-200\">Angelina Hose</p><p class=\"text-xs text-gray-400 dark:text-white/80 truncate sm:max-w-max max-w-[100px] font-normal\">24 Purchases</p></div></div></div><div class=\"\"><span class=\"text-sm font-medium\">2,624</span></div></a></li><li class=\"px-0 pt-3 ti-list-group border-0 text-gray-800 dark:text-white\"><a href=\"javascript:void(0);\" class=\"flex  justify-between items-center w-full\"><div class=\"flex space-x-3 rtl:space-x-reverse w-full\"><img class=\"avatar avatar-sm rounded-sm\" src=\"/static/img/users/6.jpg\" alt=\"Image Description\"><div class=\"flex w-full\"><div class=\"block my-auto\"><p class=\"block text-sm font-semibold text-gray-800 hover:text-gray-900 my-auto  dark:text-white dark:hover:text-gray-200\">Selena Deoyl</p><p class=\"text-xs text-gray-400 dark:text-white/80 truncate sm:max-w-max max-w-[100px] font-normal\">12 Purchases</p></div></div></div><div class=\"\"><span class=\"text-sm font-medium\">$1,035</span></div></a></li><li class=\"px-0 pt-3 pb-0 ti-list-group border-0 text-gray-800 dark:text-white\"><a href=\"javascript:void(0);\" class=\"flex  justify-between items-center w-full\"><div class=\"flex space-x-3 rtl:space-x-reverse w-full\"><img class=\"avatar avatar-sm rounded-sm\" src=\"../static/img/users/10.jpg\" alt=\"Image Description\"><div class=\"flex w-full\"><div class=\"block my-auto\"><p class=\"block text-sm font-semibold text-gray-800 hover:text-gray-900 my-auto  dark:text-white dark:hover:text-gray-200\">Charlie Davieson</p><p class=\"text-xs text-gray-400 dark:text-white/80 truncate sm:max-w-max max-w-[100px] font-normal\">15 Purchases</p></div></div></div><div class=\"\"><span class=\"text-sm font-medium\">$1,835</span></div></a></li></ul></div></div></div><div class=\"col-span-12 lg:col-span-6 xxl:col-span-3\"><div class=\"box\"><div class=\"box-header\"><div class=\"flex\"><h5 class=\"box-title my-auto\">Savings Flow</h5><div class=\"hs-dropdown ti-dropdown block ltr:ml-auto rtl:mr-auto my-auto\"><button type=\"button\" aria-label=\"button\" class=\"hs-dropdown-toggle ti-dropdown-toggle rounded-sm p-2 bg-white !border border-gray-200 text-gray-500 hover:bg-gray-100  focus:ring-gray-200 dark:bg-black/20 dark:hover:bg-black/30 dark:border-white/10 dark:hover:border-white/20 dark:focus:ring-white/10 dark:focus:ring-offset-white/10\"><i class=\"text-sm leading-none ti ti-dots-vertical\"></i></button><div class=\"hs-dropdown-menu ti-dropdown-menu\"><a class=\"ti-dropdown-item\" href=\"javascript:void(0)\">Download</a> <a class=\"ti-dropdown-item\" href=\"javascript:void(0)\">Import</a> <a class=\"ti-dropdown-item\" href=\"javascript:void(0)\">Export</a></div></div></div></div><div class=\"box-body pb-0 px-0\"><div class=\"sales-value relative border-b border-gray-200 dark:border-white/10 pb-6\"><canvas id=\"sales-donut\" class=\"!h-[230px] !w-full mx-auto my-auto\"></canvas><div class=\"chart-circle-value circle-style absolute border-2 border-dashed border-primary -top-5 inset-0 flex justify-center items-center w-[150px] h-[150px] leading-[70px] rounded-full text-5xl mx-auto my-auto\"><div class=\"text-xl font-bold\">75%</div></div></div><div class=\"grid grid-cols-2\"><div class=\"p-5 ltr:border-r rtl:border-l border-gray-200 dark:border-white/10\"><div class=\"text-sm text-gray-500 dark:text-white/80 text-center font-medium\">Sale Items</div><div class=\"text-center\"><p class=\"text-gray-800 dark:text-white text-2xl font-medium\">567</p><span class=\"text-success font-semibold\"><i class=\"ri-arrow-up-s-fill align-middle\"></i>0.23%</span></div></div><div class=\"p-5\"><div class=\"text-sm text-gray-500 dark:text-white/80 text-center font-medium\">Sale Revenue</div><div class=\"text-center\"><p class=\"text-gray-800 dark:text-white text-2xl font-medium\">$11,197</p><span class=\"text-danger font-semibold\"><i class=\"ri-arrow-down-s-fill align-middle\"></i>0.15%</span></div></div></div></div></div></div></div><!-- End::row-1 --><!-- Start::row-2 --><div class=\"grid grid-cols-12 gap-x-5\"><div class=\"col-span-12 lg:col-span-6 xxl:col-span-3\"><div class=\"box\"><div class=\"box-header\"><div class=\"flex\"><h5 class=\"box-title my-auto\">Approved Requests</h5><div class=\"hs-dropdown ti-dropdown block ltr:ml-auto rtl:mr-auto my-auto\"><button type=\"button\" aria-label=\"button\" class=\"hs-dropdown-toggle ti-dropdown-toggle rounded-sm p-2 bg-white !border border-gray-200 text-gray-500 hover:bg-gray-100  focus:ring-gray-200 dark:bg-black/20 dark:hover:bg-black/30 dark:border-white/10 dark:hover:border-white/20 dark:focus:ring-white/10 dark:focus:ring-offset-white/10\"><i class=\"text-sm leading-none ti ti-dots-vertical\"></i></button><div class=\"hs-dropdown-menu ti-dropdown-menu\"><a class=\"ti-dropdown-item\" href=\"javascript:void(0)\">Download</a> <a class=\"ti-dropdown-item\" href=\"javascript:void(0)\">Import</a> <a class=\"ti-dropdown-item\" href=\"javascript:void(0)\">Export</a></div></div></div></div><div class=\"box-body\"><ul class=\"flex flex-col\"><li class=\"p-0 mb-6 ti-list-group border-0 text-gray-800 dark:text-white\"><a href=\"javascript:void(0);\" class=\"w-full\"><div class=\"flex items-center\"><div class=\"leading-none\"><img class=\"avatar avatar-sm rounded-full\" src=\"/static/img/ecommerce/jpg/1.jpg\" alt=\"image\"></div><div class=\"flex-auto ltr:ml-2 rtl:mr-2\"><p class=\"text-sm font-semibold mb-0\">Smart Phone</p><p class=\"text-xs text-gray-400 dark:text-white/80 mb-0 !font-normal\">Mobiles</p></div><div class=\"block text-end\"><span class=\"text-sm text-success font-semibold\">$199.99</span><p class=\"text-xs text-gray-400 dark:text-white/80 !font-normal\"><i class=\"ti ti-clock-hour-2 ltr:mr-1 rtl:mr-1\"></i>01 Apr, 2023</p></div></div></a></li><li class=\"p-0 mb-6 ti-list-group border-0 text-gray-800 dark:text-white\"><a href=\"javascript:void(0);\" class=\"w-full\"><div class=\"flex items-center\"><div class=\"leading-none\"><img class=\"avatar avatar-sm rounded-full\" src=\"/static/img/ecommerce/jpg/2.jpg\" alt=\"image\"></div><div class=\"flex-auto ltr:ml-2 rtl:mr-2\"><p class=\"text-sm font-semibold mb-0\">White Headphones</p><p class=\"text-xs text-gray-400 dark:text-white/80 mb-0 !font-normal\">Music</p></div><div class=\"block text-end\"><span class=\"text-sm text-success font-semibold\">$79.49</span><p class=\"text-xs text-gray-400 dark:text-white/80 !font-normal\"><i class=\"ti ti-clock-hour-2 ltr:mr-1 rtl:mr-1\"></i>01 Apr, 2023</p></div></div></a></li><li class=\"p-0 mb-6 ti-list-group border-0 text-gray-800 dark:text-white\"><a href=\"javascript:void(0);\" class=\"w-full\"><div class=\"flex items-center\"><div class=\"leading-none\"><img class=\"avatar avatar-sm rounded-full\" src=\"/static/img/ecommerce/jpg/3.jpg\" alt=\"image\"></div><div class=\"flex-auto ltr:ml-2 rtl:mr-2\"><p class=\"text-sm font-semibold mb-0\">Stop Watch</p><p class=\"text-xs text-gray-400 dark:text-white/80 mb-0 !font-normal\">Electronics</p></div><div class=\"block text-end\"><span class=\"text-sm text-success font-semibold\">$49.29</span><p class=\"text-xs text-gray-400 dark:text-white/80 !font-normal\"><i class=\"ti ti-clock-hour-2 ltr:mr-1 rtl:mr-1\"></i>01 Apr, 2023</p></div></div></a></li><li class=\"p-0 mb-6 ti-list-group border-0 text-gray-800 dark:text-white\"><a href=\"javascript:void(0);\" class=\"w-full\"><div class=\"flex items-center\"><div class=\"leading-none\"><img class=\"avatar avatar-sm rounded-full\" src=\"/static/img/ecommerce/jpg/4.jpg\" alt=\"image\"></div><div class=\"flex-auto ltr:ml-2 rtl:mr-2\"><p class=\"text-sm font-semibold mb-0\">Kikon Camera</p><p class=\"text-xs text-gray-400 dark:text-white/80 mb-0 !font-normal\">Electronics</p></div><div class=\"block text-end\"><span class=\"text-sm text-success font-semibold\">$1,699.00</span><p class=\"text-xs text-gray-400 dark:text-white/80 !font-normal\"><i class=\"ti ti-clock-hour-2 ltr:mr-1 rtl:mr-1\"></i>01 Apr, 2023</p></div></div></a></li><li class=\"p-0 mb-6 ti-list-group border-0 text-gray-800 dark:text-white\"><a href=\"javascript:void(0);\" class=\"w-full\"><div class=\"flex items-center\"><div class=\"leading-none\"><img class=\"avatar avatar-sm rounded-full\" src=\"/static/img/ecommerce/jpg/6.jpg\" alt=\"image\"></div><div class=\"flex-auto ltr:ml-2 rtl:mr-2\"><p class=\"text-sm font-semibold mb-0\">Kids shoes</p><p class=\"text-xs text-gray-400 dark:text-white/80 mb-0 !font-normal\">Clothing</p></div><div class=\"block text-end\"><span class=\"text-sm text-success font-semibold\">$149.00</span><p class=\"text-xs text-gray-400 dark:text-white/80 !font-normal\"><i class=\"ti ti-clock-hour-2 ltr:mr-1 rtl:mr-1\"></i>01 Apr, 2023</p></div></div></a></li><li class=\"p-0 mb-0 ti-list-group border-0 text-gray-800 dark:text-white\"><a href=\"javascript:void(0);\" class=\"w-full\"><div class=\"flex items-center\"><div class=\"leading-none\"><img class=\"avatar avatar-sm rounded-full\" src=\"/static/img/ecommerce/jpg/5.jpg\" alt=\"image\"></div><div class=\"flex-auto ltr:ml-2 rtl:mr-2\"><p class=\"text-sm font-semibold mb-0\">Photo Frame</p><p class=\"text-xs text-gray-400 dark:text-white/80 mb-0 !font-normal\">Furniture</p></div><div class=\"block text-end\"><span class=\"text-sm text-success font-semibold\">$29.99</span><p class=\"text-xs text-gray-400 dark:text-white/80 !font-normal\"><i class=\"ti ti-clock-hour-2 ltr:mr-1 rtl:mr-1\"></i>01 Apr, 2023</p></div></div></a></li></ul></div></div></div><div class=\"col-span-12 lg:col-span-6 xxl:col-span-4\"><div class=\"box\"><div class=\"box-header\"><div class=\"flex\"><h5 class=\"box-title my-auto\">Social Visitors</h5><div class=\"hs-dropdown ti-dropdown block ltr:ml-auto rtl:mr-auto my-auto\"><button type=\"button\" class=\"hs-dropdown-toggle ti-dropdown-toggle rounded-sm p-1 px-3 !border border-gray-200 text-gray-400 hover:text-gray-500 hover:bg-gray-200 hover:border-gray-200 focus:ring-gray-200  dark:hover:bg-black/30 dark:border-white/10 dark:hover:border-white/20 dark:focus:ring-white/10 dark:focus:ring-offset-white/10\">This Week <i class=\"ti ti-chevron-down\"></i></button><div class=\"hs-dropdown-menu ti-dropdown-menu\"><a class=\"ti-dropdown-item\" href=\"javascript:void(0)\">This Week</a> <a class=\"ti-dropdown-item\" href=\"javascript:void(0)\">This Month</a> <a class=\"ti-dropdown-item\" href=\"javascript:void(0)\">This Year</a></div></div></div></div><div class=\"box-body p-2\"><div id=\"visitors\"></div></div></div></div><div class=\"col-span-12 lg:col-span-12 xxl:col-span-5\"><div class=\"box\"><div class=\"box-header flex\"><h5 class=\"box-title my-auto\">Recent Deposit Requests</h5><div class=\"hs-dropdown ti-dropdown block ltr:ml-auto rtl:mr-auto my-auto\"><button type=\"button\" aria-label=\"button\" class=\"hs-dropdown-toggle ti-dropdown-toggle rounded-sm p-2 bg-white !border border-gray-200 text-gray-500 hover:bg-gray-100  focus:ring-gray-200 dark:bg-black/20 dark:hover:bg-black/30 dark:border-white/10 dark:hover:border-white/20 dark:focus:ring-white/10 dark:focus:ring-offset-white/10\"><i class=\"text-sm leading-none ti ti-dots-vertical\"></i></button><div class=\"hs-dropdown-menu ti-dropdown-menu\"><a class=\"ti-dropdown-item\" href=\"javascript:void(0)\">Action</a> <a class=\"ti-dropdown-item\" href=\"javascript:void(0)\">Another Action</a> <a class=\"ti-dropdown-item\" href=\"javascript:void(0)\">Something else here</a></div></div></div><div class=\"box-body p-0\"><div class=\"overflow-auto\"><table class=\"ti-custom-table ti-custom-table-head\"><thead><tr><th scope=\"col\" class=\"text-center !p-[0.65rem]\">Product</th><th scope=\"col\" class=\"!p-[0.65rem]\">Category</th><th scope=\"col\" class=\"!p-[0.65rem]\">Stock</th><th scope=\"col\" class=\"!p-[0.65rem]\">TotalSales</th></tr></thead> <tbody><tr><td class=\"leading-none !text-gray-800 dark:!text-white !p-[0.65rem] min-w-[180px] truncate\"><img src=\"/static/img/ecommerce/products/13.png\" class=\"avatar avatar-sm p-2 rounded-full bg-gray-100 dark:bg-black/20 ltr:mr-2 rtl:ml-2\" alt=\"Image Description\">Ethnic School bag for children (24L)</td><td class=\"!p-[0.65rem]\">Bags</td><td class=\"!p-[0.65rem] text-sm\"><span class=\"badge leading-none bg-success/10 text-success rounded-sm\">In Stock</span></td><td class=\"!p-[0.65rem]\"><span class=\"text-sm font-semibold\">5,093</span></td></tr><tr><td class=\"leading-none !text-gray-800 dark:!text-white !p-[0.65rem] min-w-[180px] truncate\"><img src=\"/static/img/ecommerce/products/14.png\" class=\"avatar avatar-sm p-2 rounded-full bg-gray-100 dark:bg-black/20 ltr:mr-2 rtl:ml-2\" alt=\"Image Description\">Leather jacket for men (S,M,L,XL)</td><td class=\"!p-[0.65rem]\">Clothing</td><td class=\"!p-[0.65rem] text-sm\"><span class=\"badge leading-none bg-success/10 text-success rounded-sm\">In Stock</span></td><td class=\"!p-[0.65rem]\"><span class=\"text-sm font-semibold\">6,890</span></td></tr><tr><td class=\"leading-none !text-gray-800 dark:!text-white !p-[0.65rem] min-w-[180px] truncate\"><img src=\"/static/img/ecommerce/products/15.png\" class=\"avatar avatar-sm p-2 rounded-full bg-gray-100 dark:bg-black/20 ltr:mr-2 rtl:ml-2\" alt=\"Image Description\">Childrens Teddy toy of high quality</td><td class=\"!p-[0.65rem]\">Toys</td><td class=\"!p-[0.65rem] text-sm\"><span class=\"badge leading-none bg-danger/10 text-danger rounded-sm\">Out Of Stock</span></td><td class=\"!p-[0.65rem]\"><span class=\"text-sm font-semibold\">5,423</span></td></tr><tr><td class=\"leading-none !text-gray-800 dark:!text-white !p-[0.65rem] min-w-[180px] truncate\"><img src=\"../static/img/ecommerce/products/16.png\" class=\"avatar avatar-sm p-2 rounded-full bg-gray-100 dark:bg-black/20 ltr:mr-2 rtl:ml-2\" alt=\"Image Description\">Orange smart watch (24mm)</td><td class=\"!p-[0.65rem]\">Fashion</td><td class=\"!p-[0.65rem] text-sm\"><span class=\"badge leading-none bg-danger/10 text-danger rounded-sm\">Out Of Stock</span></td><td class=\"!p-[0.65rem]\"><span class=\"text-sm font-semibold\">10,234</span></td></tr><tr><td class=\"leading-none !text-gray-800 dark:!text-white !p-[0.65rem] min-w-[180px] truncate\"><img src=\"/static/img/ecommerce/products/17.png\" class=\"avatar avatar-sm p-2 rounded-full bg-gray-100 dark:bg-black/20 ltr:mr-2 rtl:ml-2\" alt=\"Image Description\">Black Camera</td><td class=\"!p-[0.65rem]\">Electronic</td><td class=\"!p-[0.65rem] text-sm\"><span class=\"badge leading-none bg-success/10 text-success rounded-sm\">In Stock</span></td><td class=\"!p-[0.65rem]\"><span class=\"text-sm font-semibold\">10,234</span></td></tr><tr><td class=\"leading-none !text-gray-800 dark:!text-white !p-[0.65rem] min-w-[180px] truncate\"><img src=\"/static/img/ecommerce/products/18.png\" class=\"avatar avatar-sm p-2 rounded-full bg-gray-100 dark:bg-black/20 ltr:mr-2 rtl:ml-2\" alt=\"Image Description\">Hand Bag For Ladies</td><td class=\"!p-[0.65rem]\">Fashion</td><td class=\"!p-[0.65rem] text-sm\"><span class=\"badge leading-none bg-danger/10 text-danger rounded-sm\">Out Of Stock</span></td><td class=\"!p-[0.65rem]\"><span class=\"text-sm font-semibold\">1,034</span></td></tr></tbody></table></div></div></div></div></div><!-- End::row-2 --><!-- Start::row-3 --><div class=\"grid grid-cols-12 gap-x-6\"><div class=\"col-span-12\"><div class=\"box\"><div class=\"box-header\"><div class=\"flex\"><h5 class=\"box-title my-auto\">Recent Withdrawal Requests</h5><div class=\"hs-dropdown ti-dropdown block ltr:ml-auto rtl:mr-auto my-auto\"><button type=\"button\" class=\"hs-dropdown-toggle ti-dropdown-toggle rounded-sm p-1 px-3 !border border-gray-200 text-gray-400 hover:text-gray-500 hover:bg-gray-200 hover:border-gray-200 focus:ring-gray-200  dark:hover:bg-black/30 dark:border-white/10 dark:hover:border-white/20 dark:focus:ring-white/10 dark:focus:ring-offset-white/10\">View All <i class=\"ti ti-chevron-down\"></i></button><div class=\"hs-dropdown-menu ti-dropdown-menu\"><a class=\"ti-dropdown-item\" href=\"javascript:void(0)\">Download</a> <a class=\"ti-dropdown-item\" href=\"javascript:void(0)\">Import</a> <a class=\"ti-dropdown-item\" href=\"javascript:void(0)\">Export</a></div></div></div></div><div class=\"box-body\"><div class=\"table-bordered rounded-sm ti-custom-table-head overflow-auto\"><table class=\"ti-custom-table ti-custom-table-head whitespace-nowrap\"><thead class=\"bg-gray-50 dark:bg-black/20\"><tr class=\"\"><th scope=\"col\" class=\"dark:text-white/80\">S.no</th><th scope=\"col\" class=\"dark:text-white/80\">Item Details</th><th scope=\"col\" class=\"dark:text-white/80\">Customer ID</th><th scope=\"col\" class=\"dark:text-white/80 min-w-[300px]\">Customer Details</th><th scope=\"col\" class=\"dark:text-white/80\">Ordered Date</th><th scope=\"col\" class=\"dark:text-white/80\">Status</th><th scope=\"col\" class=\"dark:text-white/80\">Price</th><th scope=\"col\" class=\"dark:text-white/80\">Action</th></tr></thead> <tbody class=\"\"><tr class=\"\"><td>1</td><td><div class=\"flex space-x-3 rtl:space-x-reverse w-full\"><img class=\"avatar rounded-sm bg-gray-100 dark:bg-black/20 p-2\" src=\"/static/img/ecommerce/products/1.png\" alt=\"Image Description\"><div class=\"block w-full my-auto\"><span class=\"block text-sm font-semibold text-gray-800 dark:text-gray-300 min-w-[180px] truncate\">Black Heals For Women</span> <span class=\"block text-xs text-gray-400 dark:text-white/80 !font-normal\">₦2343</span></div></div></td><td class=\"!text-success font-semibold text-base\">#user1</td><td><div class=\"flex space-x-3 rtl:space-x-reverse text-start\"><img class=\"avatar avatar-sm rounded-sm\" src=\"/static/img/users/2.jpg\" alt=\"Image Description\"><div class=\"block my-auto\"><p class=\"block text-sm font-semibold my-auto text-gray-800 dark:text-white\">Socrates Itumay</p><span class=\"block text-xs text-gray-400 dark:text-white/80 !font-normal my-auto\">socratesitumay@gmail.com</span></div></div></td><td>10-12-2022</td><td><span class=\"truncate whitespace-nowrap inline-block py-1 px-3 rounded-full text-xs font-medium bg-success/10 text-success/80\">Success</span></td><td>$999</td><td class=\"font-medium space-x-2 rtl:space-x-reverse\"><div class=\"hs-tooltip ti-main-tooltip\"><a href=\"javascript:void(0);\" class=\"m-0 hs-tooltip-toggle relative w-8 h-8 ti-btn rounded-full p-0 transition-none focus:outline-none ti-btn-soft-primary\"><i class=\"ti ti-eye\"></i> <span class=\"hs-tooltip-content ti-main-tooltip-content py-1 px-2 bg-gray-900 text-xs font-medium text-white shadow-sm dark:bg-slate-700\" role=\"tooltip\">View</span></a></div><div class=\"hs-tooltip ti-main-tooltip\"><a href=\"javascript:void(0);\" class=\"customer-edit m-0 hs-tooltip-toggle relative w-8 h-8 ti-btn rounded-full p-0 transition-none focus:outline-none ti-btn-soft-secondary\"><i class=\"ti ti-pencil\"></i> <span class=\"hs-tooltip-content ti-main-tooltip-content py-1 px-2 bg-gray-900 text-xs font-medium text-white shadow-sm dark:bg-slate-700\" role=\"tooltip\">Edit</span></a></div><div class=\"hs-tooltip ti-main-tooltip\"><a href=\"javascript:void(0);\" class=\"m-0 hs-tooltip-toggle relative w-8 h-8 ti-btn rounded-full p-0 transition-none focus:outline-none ti-btn-soft-danger\"><i class=\"ti ti-trash\"></i> <span class=\"hs-tooltip-content ti-main-tooltip-content py-1 px-2 bg-gray-900 text-xs font-medium text-white shadow-sm dark:bg-slate-700\" role=\"tooltip\">Delete</span></a></div></td></tr><tr class=\"\"><td>2</td><td><div class=\"flex space-x-3 rtl:space-x-reverse w-full\"><img class=\"avatar rounded-sm bg-gray-100 dark:bg-black/20 p-2\" src=\"/static/img/ecommerce/products/2.png\" alt=\"Image Description\"><div class=\"block w-full my-auto\"><span class=\"block text-sm font-semibold text-gray-800 dark:text-gray-300 min-w-[180px] truncate\">White Tshirt</span> <span class=\"block text-xs text-gray-400 dark:text-white/80 !font-normal\">₦5655</span></div></div></td><td class=\"!text-success font-semibold text-base\">#user2</td><td><div class=\"flex space-x-3 rtl:space-x-reverse text-start\"><img class=\"avatar avatar-sm rounded-sm\" src=\"/static/img/users/3.jpg\" alt=\"Image Description\"><div class=\"block my-auto\"><p class=\"block text-sm font-semibold my-auto text-gray-800 dark:text-white\">Json Taylor</p><span class=\"block text-xs text-gray-400 dark:text-white/80 !font-normal my-auto\">jsontaylor2416@gmail.com</span></div></div></td><td>11-12-2022</td><td><span class=\"truncate whitespace-nowrap inline-block py-1 px-3 rounded-full text-xs font-medium bg-info/10 text-info/80\">Shipping</span></td><td>$699</td><td class=\"font-medium space-x-2 rtl:space-x-reverse\"><div class=\"hs-tooltip ti-main-tooltip\"><a href=\"javascript:void(0);\" class=\"m-0 hs-tooltip-toggle relative w-8 h-8 ti-btn rounded-full p-0 transition-none focus:outline-none ti-btn-soft-primary\"><i class=\"ti ti-eye\"></i> <span class=\"hs-tooltip-content ti-main-tooltip-content py-1 px-2 bg-gray-900 text-xs font-medium text-white shadow-sm dark:bg-slate-700\" role=\"tooltip\">View</span></a></div><div class=\"hs-tooltip ti-main-tooltip\"><a href=\"javascript:void(0);\" class=\"customer-edit m-0 hs-tooltip-toggle relative w-8 h-8 ti-btn rounded-full p-0 transition-none focus:outline-none ti-btn-soft-secondary\"><i class=\"ti ti-pencil\"></i> <span class=\"hs-tooltip-content ti-main-tooltip-content py-1 px-2 bg-gray-900 text-xs font-medium text-white shadow-sm dark:bg-slate-700\" role=\"tooltip\">Edit</span></a></div><div class=\"hs-tooltip ti-main-tooltip\"><a href=\"javascript:void(0);\" class=\"m-0 hs-tooltip-toggle relative w-8 h-8 ti-btn rounded-full p-0 transition-none focus:outline-none ti-btn-soft-danger\"><i class=\"ti ti-trash\"></i> <span class=\"hs-tooltip-content ti-main-tooltip-content py-1 px-2 bg-gray-900 text-xs font-medium text-white shadow-sm dark:bg-slate-700\" role=\"tooltip\">Delete</span></a></div></td></tr><tr class=\"\"><td>3</td><td><div class=\"flex space-x-3 rtl:space-x-reverse w-full\"><img class=\"avatar rounded-sm bg-gray-100 dark:bg-black/20 p-2\" src=\"/static/img/ecommerce/products/3.png\" alt=\"Image Description\"><div class=\"block w-full my-auto\"><span class=\"block text-sm font-semibold text-gray-800 dark:text-gray-300 min-w-[180px] truncate\">Jacket For Men</span> <span class=\"block text-xs text-gray-400 dark:text-white/80 !font-normal\">₦15245</span></div></div></td><td class=\"!text-success font-semibold text-base\">#user3</td><td><div class=\"flex space-x-3 rtl:space-x-reverse text-start\"><img class=\"avatar avatar-sm rounded-sm\" src=\"/static/img/users/4.jpg\" alt=\"Image Description\"><div class=\"block my-auto\"><p class=\"block text-sm font-semibold my-auto text-gray-800 dark:text-white\">Suzika Stallone</p><span class=\"block text-xs text-gray-400 dark:text-white/80 !font-normal my-auto\">suzikastallone3214@gmail.com</span></div></div></td><td>12-12-2022</td><td><span class=\"truncate whitespace-nowrap inline-block py-1 px-3 rounded-full text-xs font-medium bg-warning/10 text-warning/80\">Out For Delivery</span></td><td>$599</td><td class=\"font-medium space-x-2 rtl:space-x-reverse\"><div class=\"hs-tooltip ti-main-tooltip\"><a href=\"javascript:void(0);\" class=\"m-0 hs-tooltip-toggle relative w-8 h-8 ti-btn rounded-full p-0 transition-none focus:outline-none ti-btn-soft-primary\"><i class=\"ti ti-eye\"></i> <span class=\"hs-tooltip-content ti-main-tooltip-content py-1 px-2 bg-gray-900 text-xs font-medium text-white shadow-sm dark:bg-slate-700\" role=\"tooltip\">View</span></a></div><div class=\"hs-tooltip ti-main-tooltip\"><a href=\"javascript:void(0);\" class=\"customer-edit m-0 hs-tooltip-toggle relative w-8 h-8 ti-btn rounded-full p-0 transition-none focus:outline-none ti-btn-soft-secondary\"><i class=\"ti ti-pencil\"></i> <span class=\"hs-tooltip-content ti-main-tooltip-content py-1 px-2 bg-gray-900 text-xs font-medium text-white shadow-sm dark:bg-slate-700\" role=\"tooltip\">Edit</span></a></div><div class=\"hs-tooltip ti-main-tooltip\"><a href=\"javascript:void(0);\" class=\"m-0 hs-tooltip-toggle relative w-8 h-8 ti-btn rounded-full p-0 transition-none focus:outline-none ti-btn-soft-danger\"><i class=\"ti ti-trash\"></i> <span class=\"hs-tooltip-content ti-main-tooltip-content py-1 px-2 bg-gray-900 text-xs font-medium text-white shadow-sm dark:bg-slate-700\" role=\"tooltip\">Delete</span></a></div></td></tr><tr class=\"\"><td>4</td><td><div class=\"flex space-x-3 rtl:space-x-reverse w-full\"><img class=\"avatar rounded-sm bg-gray-100 dark:bg-black/20 p-2\" src=\"/static/img/ecommerce/products/4.png\" alt=\"Image Description\"><div class=\"block w-full my-auto\"><span class=\"block text-sm font-semibold text-gray-800 dark:text-gray-300 min-w-[180px] truncate\">Airpods</span> <span class=\"block text-xs text-gray-400 dark:text-white/80 !font-normal\">#45415</span></div></div></td><td class=\"!text-success font-semibold text-base\">#user4</td><td><div class=\"flex space-x-3 rtl:space-x-reverse text-start\"><img class=\"avatar avatar-sm rounded-sm\" src=\"/static/img/users/5.jpg\" alt=\"Image Description\"><div class=\"block my-auto\"><p class=\"block text-sm font-semibold my-auto text-gray-800 dark:text-white\">Selena Deoyl</p><span class=\"block text-xs text-gray-400 dark:text-white/80 !font-normal my-auto\">selenadeoyl114@gmail.com</span></div></div></td><td>12-12-2022</td><td><span class=\"truncate whitespace-nowrap inline-block py-1 px-3 rounded-full text-xs font-medium bg-danger/10 text-danger/80\">Cancelled</span></td><td>$299</td><td class=\"font-medium space-x-2 rtl:space-x-reverse\"><div class=\"hs-tooltip ti-main-tooltip\"><a href=\"javascript:void(0);\" class=\"m-0 hs-tooltip-toggle relative w-8 h-8 ti-btn rounded-full p-0 transition-none focus:outline-none ti-btn-soft-primary\"><i class=\"ti ti-eye\"></i> <span class=\"hs-tooltip-content ti-main-tooltip-content py-1 px-2 bg-gray-900 text-xs font-medium text-white shadow-sm dark:bg-slate-700\" role=\"tooltip\">View</span></a></div><div class=\"hs-tooltip ti-main-tooltip\"><a href=\"javascript:void(0);\" class=\"customer-edit m-0 hs-tooltip-toggle relative w-8 h-8 ti-btn rounded-full p-0 transition-none focus:outline-none ti-btn-soft-secondary\"><i class=\"ti ti-pencil\"></i> <span class=\"hs-tooltip-content ti-main-tooltip-content py-1 px-2 bg-gray-900 text-xs font-medium text-white shadow-sm dark:bg-slate-700\" role=\"tooltip\">Edit</span></a></div><div class=\"hs-tooltip ti-main-tooltip\"><a href=\"javascript:void(0);\" class=\"m-0 hs-tooltip-toggle relative w-8 h-8 ti-btn rounded-full p-0 transition-none focus:outline-none ti-btn-soft-danger\"><i class=\"ti ti-trash\"></i> <span class=\"hs-tooltip-content ti-main-tooltip-content py-1 px-2 bg-gray-900 text-xs font-medium text-white shadow-sm dark:bg-slate-700\" role=\"tooltip\">Delete</span></a></div></td></tr><tr class=\"\"><td>5</td><td><div class=\"flex space-x-3 rtl:space-x-reverse w-full\"><img class=\"avatar rounded-sm bg-gray-100 dark:bg-black/20 p-2\" src=\"/static/img/ecommerce/products/5.png\" alt=\"Image Description\"><div class=\"block w-full my-auto\"><span class=\"block text-sm font-semibold text-gray-800 dark:text-gray-300 min-w-[180px] truncate\">Jasmine Fragrance</span> <span class=\"block text-xs text-gray-400 dark:text-white/80 !font-normal\">#35656</span></div></div></td><td class=\"!text-success font-semibold text-base\">#user5</td><td><div class=\"flex space-x-3 rtl:space-x-reverse text-start\"><img class=\"avatar avatar-sm rounded-sm\" src=\"/static/img/users/9.jpg\" alt=\"Image Description\"><div class=\"block my-auto\"><p class=\"block text-sm font-semibold my-auto text-gray-800 dark:text-white\">Roman Killon</p><span class=\"block text-xs text-gray-400 dark:text-white/80 !font-normal my-auto\">romankillon143@gmail.com</span></div></div></td><td>13-12-2022</td><td><span class=\"truncate whitespace-nowrap inline-block py-1 px-3 rounded-full text-xs font-medium bg-primary/10 text-primary/80\">Ordered</span></td><td>$299</td><td class=\"font-medium space-x-2 rtl:space-x-reverse\"><div class=\"hs-tooltip ti-main-tooltip\"><a href=\"javascript:void(0);\" class=\"m-0 hs-tooltip-toggle relative w-8 h-8 ti-btn rounded-full p-0 transition-none focus:outline-none ti-btn-soft-primary\"><i class=\"ti ti-eye\"></i> <span class=\"hs-tooltip-content ti-main-tooltip-content py-1 px-2 bg-gray-900 text-xs font-medium text-white shadow-sm dark:bg-slate-700\" role=\"tooltip\">View</span></a></div><div class=\"hs-tooltip ti-main-tooltip\"><a href=\"javascript:void(0);\" class=\"customer-edit m-0 hs-tooltip-toggle relative w-8 h-8 ti-btn rounded-full p-0 transition-none focus:outline-none ti-btn-soft-secondary\"><i class=\"ti ti-pencil\"></i> <span class=\"hs-tooltip-content ti-main-tooltip-content py-1 px-2 bg-gray-900 text-xs font-medium text-white shadow-sm dark:bg-slate-700\" role=\"tooltip\">Edit</span></a></div><div class=\"hs-tooltip ti-main-tooltip\"><a href=\"javascript:void(0);\" class=\"m-0 hs-tooltip-toggle relative w-8 h-8 ti-btn rounded-full p-0 transition-none focus:outline-none ti-btn-soft-danger\"><i class=\"ti ti-trash\"></i> <span class=\"hs-tooltip-content ti-main-tooltip-content py-1 px-2 bg-gray-900 text-xs font-medium text-white shadow-sm dark:bg-slate-700\" role=\"tooltip\">Delete</span></a></div></td></tr><tr class=\"\"><td>6</td><td><div class=\"flex space-x-3 rtl:space-x-reverse w-full\"><img class=\"avatar rounded-sm bg-gray-100 dark:bg-black/20 p-2\" src=\"/static/img/ecommerce/products/6.png\" alt=\"Image Description\"><div class=\"block w-full my-auto\"><span class=\"block text-sm font-semibold text-gray-800 dark:text-gray-300 min-w-[180px] truncate\">Smart Watch</span> <span class=\"block text-xs text-gray-400 dark:text-white/80 !font-normal\">#622545</span></div></div></td><td class=\"!text-success font-semibold text-base\">#user6</td><td><div class=\"flex space-x-3 rtl:space-x-reverse text-start\"><img class=\"avatar avatar-sm rounded-sm\" src=\"/static/img/users/10.jpg\" alt=\"Image Description\"><div class=\"block my-auto\"><p class=\"block text-sm font-semibold my-auto text-gray-800 dark:text-white\">Charlie Davieson</p><span class=\"block text-xs text-gray-400 dark:text-white/80 !font-normal my-auto\">charliedavieson@gmail.com</span></div></div></td><td>13-12-2022</td><td><span class=\"truncate whitespace-nowrap inline-block py-1 px-3 rounded-full text-xs font-medium bg-secondary/10 text-secondary/80\">Packed</span></td><td>$299</td><td class=\"font-medium space-x-2 rtl:space-x-reverse\"><div class=\"hs-tooltip ti-main-tooltip\"><a href=\"javascript:void(0);\" class=\"m-0 hs-tooltip-toggle relative w-8 h-8 ti-btn rounded-full p-0 transition-none focus:outline-none ti-btn-soft-primary\"><i class=\"ti ti-eye\"></i> <span class=\"hs-tooltip-content ti-main-tooltip-content py-1 px-2 bg-gray-900 text-xs font-medium text-white shadow-sm dark:bg-slate-700\" role=\"tooltip\">View</span></a></div><div class=\"hs-tooltip ti-main-tooltip\"><a href=\"javascript:void(0);\" class=\"customer-edit m-0 hs-tooltip-toggle relative w-8 h-8 ti-btn rounded-full p-0 transition-none focus:outline-none ti-btn-soft-secondary\"><i class=\"ti ti-pencil\"></i> <span class=\"hs-tooltip-content ti-main-tooltip-content py-1 px-2 bg-gray-900 text-xs font-medium text-white shadow-sm dark:bg-slate-700\" role=\"tooltip\">Edit</span></a></div><div class=\"hs-tooltip ti-main-tooltip\"><a href=\"javascript:void(0);\" class=\"m-0 hs-tooltip-toggle relative w-8 h-8 ti-btn rounded-full p-0 transition-none focus:outline-none ti-btn-soft-danger\"><i class=\"ti ti-trash\"></i> <span class=\"hs-tooltip-content ti-main-tooltip-content py-1 px-2 bg-gray-900 text-xs font-medium text-white shadow-sm dark:bg-slate-700\" role=\"tooltip\">Delete</span></a></div></td></tr></tbody></table></div></div></div></div></div><!-- End::row-3 --></div><!-- Start::main-content --></div>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<aside class=\"app-sidebar\" id=\"sidebar\"><!-- Start::main-sidebar-header --><div class=\"main-sidebar-header\"><h2 class=\"text-white\">Gold Savings</h2></div><!-- End::main-sidebar-header --><!-- Start::main-sidebar --><div class=\"main-sidebar \" id=\"sidebar-scroll\"><!-- Start::nav --><nav class=\"main-menu-container nav nav-pills flex-column sub-open\"><div class=\"slide-left\" id=\"slide-left\"><svg xmlns=\"http://www.w3.org/2000/svg\" fill=\"#7b8191\" width=\"24\" height=\"24\" viewBox=\"0 0 24 24\"><path d=\"M13.293 6.293 7.586 12l5.707 5.707 1.414-1.414L10.414 12l4.293-4.293z\"></path></svg></div><ul class=\"main-menu\"><!-- Start::slide__category --><li class=\"slide__category\"><span class=\"category-name\">Main</span></li><!-- End::slide__category --><!-- Start::slide --><li class=\"slide\"><a href=\"\" hx-get=\"window.location.reload()\" hx-trigger=\"click\" hx-swap=\"none\" hx-on=\"htmx:afterRequest: window.location.reload()\" class=\"side-menu__item\"><i class=\"ri-home-8-line side-menu__icon\"></i> <span class=\"side-menu__label\">Home</span></a></li><!-- End::slide --><!-- Start::slide__category --><li class=\"slide__category\"><span class=\"category-name\">General</span></li><!-- End::slide__category --><!-- Start::slide --><li class=\"slide has-sub\"><a href=\"javascript:void(0);\" class=\"side-menu__item\"><i class=\"ri-inbox-line side-menu__icon\"></i> <span class=\"side-menu__label\">Plans</span> <i class=\"ri ri-arrow-right-s-line side-menu__angle\"></i></a><ul class=\"slide-menu child1\"><li class=\"slide side-menu__label1\"><a href=\"javascript:void(0)\">List Savings</a></li><li class=\"slide\"><a hx-get=\"/admin/api/plan\" hx-target=\"#main-content\" class=\"side-menu__item\">Create Plan</a></li></ul></li><!-- End::slide --><!-- Start::slide --><li class=\"slide has-sub\"><a href=\"javascript:void(0);\" class=\"side-menu__item\"><i class=\"ri-cpu-line side-menu__icon\"></i> <span class=\"side-menu__label\">Users</span> <i class=\"ri ri-arrow-right-s-line side-menu__angle\"></i></a><ul class=\"slide-menu child1\"><li class=\"slide side-menu__label1\"><a href=\"javascript:void(0)\">Create New User</a></li><li class=\"slide\"><a hx-get=\"/admin/api/users\" hx-target=\"#main-content\" class=\"side-menu__item\">List Users</a></li></ul></li><!-- End::slide --><!-- Start::slide --><li class=\"slide has-sub\"><a href=\"javascript:void(0);\" class=\"side-menu__item\"><i class=\"ri-stack-line side-menu__icon\"></i> <span class=\"side-menu__label\">Tokens</span> <i class=\"ri ri-arrow-right-s-line side-menu__angle\"></i></a><ul class=\"slide-menu child1\"><li class=\"slide side-menu__label1\"><a href=\"javascript:void(0)\">Configure Tokens</a></li><li class=\"slide\"><a href=\"#\" class=\"side-menu__item\">Conversion Settings</a></li></ul></li><!-- End::slide --><!-- Start::slide --><li class=\"slide has-sub\"><a href=\"javascript:void(0);\" class=\"side-menu__item\"><i class=\"ri-file-list-3-line side-menu__icon\"></i> <span class=\"side-menu__label\">Referral Management</span> <i class=\"ri ri-arrow-right-s-line side-menu__angle\"></i></a><ul class=\"slide-menu child1\"><li class=\"slide side-menu__label1\"><a href=\"javascript:void(0)\">Configure Rewards</a></li><li class=\"slide\"><a href=\"#\" class=\"side-menu__item\">Top Referrals</a></li></ul></li><!-- End::slide --><!-- Start::slide__category --><li class=\"slide__category\"><span class=\"category-name\">System</span></li><!-- End::slide__category --><!-- Start::slide --><li class=\"slide has-sub\"><a href=\"javascript:void(0);\" class=\"side-menu__item\"><i class=\"ri-node-tree side-menu__icon\"></i> <span class=\"side-menu__label\">Configurations</span> <i class=\"ri ri-arrow-right-s-line side-menu__angle\"></i></a><ul class=\"slide-menu child1\"><li class=\"slide side-menu__label1\"><a href=\"javascript:void(0)\">Interet Management</a></li><li class=\"slide\"><a href=\"javascript:void(0);\" class=\"side-menu__item\">Nested-1</a></li></ul></li><!-- End::slide --></ul><div class=\"slide-right\" id=\"slide-right\"><svg xmlns=\"http://www.w3.org/2000/svg\" fill=\"#7b8191\" width=\"24\" height=\"24\" viewBox=\"0 0 24 24\"><path d=\"M10.707 17.707 16.414 12l-5.707-5.707-1.414 1.414L13.586 12l-4.293 4.293z\"></path></svg></div></nav><!-- End::nav --></div><!-- End::main-sidebar --></aside><!-- Start::Header --> <header class=\"header custom-sticky !top-0 !w-full\"><nav class=\"main-header\" aria-label=\"Global\"><div class=\"header-content\"><div class=\"header-left\"><!-- Navigation Toggle --><div class=\"\"><button type=\"button\" class=\"sidebar-toggle !w-100 !h-100\"><span class=\"sr-only\">Toggle Navigation</span> <i class=\"ri-arrow-right-circle-line header-icon\"></i></button></div><!-- End Navigation Toggle --></div><div class=\"responsive-logo\"><h2 class=\"text-black text-4xl\">Gold Savings</h2></div><div class=\"header-right\"><div class=\"responsive-headernav\"><div class=\"header-nav-right\"><div class=\"header-theme-mode hidden sm:block\"><a aria-label=\"anchor\" class=\"hs-dark-mode-active:hidden flex hs-dark-mode group flex-shrink-0 justify-center items-center gap-2 h-[2.375rem] w-[2.375rem] rounded-full font-medium bg-gray-100 hover:bg-gray-200 text-gray-500 align-middle focus:outline-none focus:ring-0 focus:ring-gray-400 focus:ring-offset-0 focus:ring-offset-white transition-all text-xs dark:bg-bgdark dark:hover:bg-black/20 dark:text-white/70 dark:hover:text-white dark:focus:ring-white/10 dark:focus:ring-offset-white/10\" href=\"javascript:;\" data-hs-theme-click-value=\"dark\"><i class=\"ri-moon-line header-icon\"></i></a> <a aria-label=\"anchor\" class=\"hs-dark-mode-active:flex hidden hs-dark-mode group flex-shrink-0 justify-center items-center gap-2 h-[2.375rem] w-[2.375rem] rounded-full font-medium bg-gray-100 hover:bg-gray-200 text-gray-500 align-middle focus:outline-none focus:ring-0 focus:ring-gray-400 focus:ring-offset-0 focus:ring-offset-white transition-all text-xs dark:bg-bgdark dark:hover:bg-black/20 dark:text-white/70 dark:hover:text-white dark:focus:ring-white/10 dark:focus:ring-offset-white/10\" href=\"javascript:;\" data-hs-theme-click-value=\"light\"><i class=\"ri-sun-line header-icon\"></i></a></div><div class=\"header-notification hs-dropdown ti-dropdown hidden sm:block\" data-hs-dropdown-placement=\"bottom-right\"><button id=\"dropdown-notification\" type=\"button\" class=\"hs-dropdown-toggle ti-dropdown-toggle p-0 border-0 flex-shrink-0 h-[2.375rem] w-[2.375rem] rounded-full shadow-none focus:ring-gray-400 text-xs dark:focus:ring-white/10\"><i class=\"ri-notification-2-line header-icon animate-bell\"></i> <span class=\"flex absolute h-5 w-5 top-0 ltr:right-0 rtl:left-0 -mt-1 ltr:-mr-1 rtl:-ml-1\"><span class=\"animate-ping absolute inline-flex h-full w-full rounded-full bg-success/80 opacity-75\"></span> <span class=\"relative inline-flex rounded-full h-5 w-5 bg-success text-white justify-center items-center\" id=\"notify-data\">4</span></span></button><div class=\"hs-dropdown-menu ti-dropdown-menu w-[20rem] border-0\" aria-labelledby=\"dropdown-notification\"><div class=\"ti-dropdown-header !bg-primary border-b dark:border-white/10 flex justify-between items-center\"><p class=\"ti-dropdown-header-title !text-white font-semibold\">Notifications</p><a href=\"javascript:void(0)\" class=\"badge bg-black/20 text-white rounded-sm\">Mark All Read</a></div><div class=\"ti-dropdown-divider divide-y divide-gray-200 dark:divide-white/10\"><div class=\"py-2 first:pt-0 last:pb-0\" id=\"allNotifyContainer\"><div class=\"ti-dropdown-item relative header-box\"><a href=\"mail-inbox.html\" class=\"flex space-x-3 rtl:space-x-reverse\"><div class=\"ltr:mr-2 rtl:ml-2 avatar rounded-full ring-0\"><img src=\"/static/img/users/17.jpg\" alt=\"img\" class=\"rounded-sm\"></div><div class=\"relative w-full\"><h5 class=\"text-sm text-gray-800 dark:text-white font-semibold mb-1\">Elon Isk</h5><p class=\"text-xs mb-1 max-w-[200px] truncate\">Hello there! How are you doing? Call me when...</p><p class=\"text-xs text-gray-400 dark:text-white/70\">2 min</p></div></a> <a aria-label=\"anchor\" href=\"javascript:void(0);\" class=\"header-remove-btn ltr:ml-auto rtl:mr-auto text-lg text-gray-500/20 dark:text-white/20 hover:text-gray-800 dark:hover:text-white\"><i class=\"ri-close-circle-line\"></i></a></div><div class=\"ti-dropdown-item relative header-box\"><a href=\"mail-inbox.html\" class=\"flex items-center space-x-3 rtl:space-x-reverse\"><div class=\"ltr:mr-2 rtl:ml-2 avatar rounded-full ring-0\"><img src=\"/static/img/users/2.jpg\" alt=\"img\" class=\"rounded-sm\"></div><div class=\"relative w-full\"><h5 class=\"text-sm text-gray-800 dark:text-white font-semibold mb-1\">Shakira Sen</h5><p class=\"text-xs mb-1 max-w-[200px] truncate\">I would like to discuss about that static...</p><p class=\"text-xs text-gray-400 dark:text-white/70\">09:43</p></div></a> <a aria-label=\"anchor\" href=\"javascript:void(0);\" class=\"header-remove-btn ltr:ml-auto rtl:mr-auto text-lg text-gray-500/20 dark:text-white/20 hover:text-gray-800 dark:hover:text-white\"><i class=\"ri-close-circle-line\"></i></a></div><div class=\"ti-dropdown-item relative header-box\"><a href=\"mail-inbox.html\" class=\"flex items-center space-x-3 rtl:space-x-reverse\"><div class=\"ltr:mr-2 rtl:ml-2 avatar rounded-full ring-0\"><img src=\"/static/img/users/21.jpg\" alt=\"img\" class=\"rounded-sm\"></div><div class=\"relative w-full\"><h5 class=\"text-sm text-gray-800 dark:text-white font-semibold mb-1\">Sebastian</h5><p class=\"text-xs mb-1 max-w-[200px] truncate\">Shall we go to the cafe at downtown...</p><p class=\"text-xs text-gray-400 dark:text-white/70\">yesterday</p></div></a> <a aria-label=\"anchor\" href=\"javascript:void(0);\" class=\"header-remove-btn ltr:ml-auto rtl:mr-auto text-lg text-gray-500/20 dark:text-white/20 hover:text-gray-800 dark:hover:text-white\"><i class=\"ri-close-circle-line\"></i></a></div><div class=\"ti-dropdown-item relative header-box\"><a href=\"mail-inbox.html\" class=\"flex items-center space-x-3 rtl:space-x-reverse\"><div class=\"ltr:mr-2 rtl:ml-2 avatar rounded-full ring-0\"><img src=\"/static/img/users/11.jpg\" alt=\"img\" class=\"rounded-sm\"></div><div class=\"relative w-full\"><h5 class=\"text-sm text-gray-800 dark:text-white font-semibold mb-1\">Charlie Davieson</h5><p class=\"text-xs mb-1 max-w-[200px] truncate\">Lorem ipsum dolor sit amet, consectetur</p><p class=\"text-xs text-gray-400 dark:text-white/70\">yesterday</p></div></a> <a aria-label=\"anchor\" href=\"javascript:void(0);\" class=\"header-remove-btn ltr:ml-auto rtl:mr-auto text-lg text-gray-500/20 dark:text-white/20 hover:text-gray-800 dark:hover:text-white\"><i class=\"ri-close-circle-line\"></i></a></div></div><div class=\"py-2 first:pt-0 px-5\"><a class=\"w-full ti-btn ti-btn-primary p-2\" href=\"mail-inbox.html\">View All</a></div></div></div></div><div class=\"header-profile hs-dropdown ti-dropdown\" data-hs-dropdown-placement=\"bottom-right\"><button id=\"dropdown-profile\" type=\"button\" class=\"hs-dropdown-toggle ti-dropdown-toggle gap-2 p-0 flex-shrink-0 h-8 w-8 rounded-full shadow-none focus:ring-gray-400 text-xs dark:focus:ring-white/10\"><img class=\"inline-block rounded-full ring-2 ring-white dark:ring-white/10\" src=\"/static/img/users/1.jpg\" alt=\"Image Description\"></button><div class=\"hs-dropdown-menu ti-dropdown-menu border-0 w-[20rem]\" aria-labelledby=\"dropdown-profile\"><div class=\"ti-dropdown-header !bg-primary flex\"><div class=\"ltr:mr-3 rtl:ml-3\"><img class=\"avatar shadow-none rounded-full !ring-transparent\" src=\"/static/img/users/1.jpg\" alt=\"profile-img\"></div><div><p class=\"ti-dropdown-header-title !text-white\">Admin</p><p class=\"ti-dropdown-header-content !text-white/50\">Admin Email</p></div></div><div class=\"mt-2 ti-dropdown-divider\"><a href=\"#\" class=\"ti-dropdown-item\"><i class=\"ti ti-user-circle text-lg\"></i> Profile</a> <a href=\"#\" class=\"ti-dropdown-item\"><i class=\"ti ti-adjustments-horizontal text-lg\"></i> Settings</a> <a href=\"#\" class=\"ti-dropdown-item\"><i class=\"ti ti-logout  text-lg\"></i> Log Out</a></div></div></div></div></div></div></div></nav></header><!-- End::Header --> <div class=\"content\"><!-- Start::main-content --><div class=\"main-content\" id=\"main-content\"><!-- Page Header --><div class=\"block justify-between page-header md:flex\"><div><h3 class=\"text-gray-700 hover:text-gray-900 dark:text-white dark:hover:text-white text-2xl font-medium\">GOLD CO_OP</h3></div><ol class=\"flex items-center whitespace-nowrap min-w-0\"><li class=\"text-sm\"><a class=\"flex items-center font-semibold text-primary hover:text-primary dark:text-primary truncate\" href=\"javascript:void(0);\">Home <i class=\"ti ti-chevrons-right flex-shrink-0 mx-3 overflow-visible text-gray-300 dark:text-gray-300 rtl:rotate-180\"></i></a></li><li class=\"text-sm text-gray-500 hover:text-primary dark:text-white/70 \" aria-current=\"page\">Dashboard</li></ol></div><!-- Page Header Close --><!-- Start::row-1 --><div class=\"grid grid-cols-12 gap-x-5\"><div class=\"col-span-12 md:col-span-6 xxl:col-span-3\"><div class=\"box overflow-hidden\"><div class=\"box-body\"><div class=\"flex\"><div class=\"flex space-x-3 rtl:space-x-reverse\"><div class=\"avatar p-2 rounded-sm bg-primary/10\"><svg class=\"fill-primary\" xmlns=\"http://www.w3.org/2000/svg\" enable-background=\"new 0 0 24 24\" viewBox=\"0 0 24 24\"><path class=\"fill-primary\" d=\"M9,10h2.5c0.276123,0,0.5-0.223877,0.5-0.5S11.776123,9,11.5,9H10V8c0-0.276123-0.223877-0.5-0.5-0.5S9,7.723877,9,8v1c-1.1045532,0-2,0.8954468-2,2s0.8954468,2,2,2h1c0.5523071,0,1,0.4476929,1,1s-0.4476929,1-1,1H7.5C7.223877,15,7,15.223877,7,15.5S7.223877,16,7.5,16H9v1.0005493C9.0001831,17.2765503,9.223999,17.5001831,9.5,17.5h0.0006104C9.7765503,17.4998169,10.0001831,17.276001,10,17v-1c1.1045532,0,2-0.8954468,2-2s-0.8954468-2-2-2H9c-0.5523071,0-1-0.4476929-1-1S8.4476929,10,9,10z M21.5,12H17V2.5c0.000061-0.0875244-0.0228882-0.1735229-0.0665283-0.2493896c-0.1375732-0.2393188-0.4431152-0.3217773-0.6824951-0.1842041l-3.2460327,1.8603516L9.7481079,2.0654297c-0.1536865-0.0878906-0.3424072-0.0878906-0.4960938,0l-3.256897,1.8613281L2.7490234,2.0664062C2.6731567,2.0227661,2.5871582,1.9998779,2.4996338,1.9998779C2.2235718,2.000061,1.9998779,2.223938,2,2.5v17c0.0012817,1.380188,1.119812,2.4987183,2.5,2.5H19c1.6561279-0.0018311,2.9981689-1.3438721,3-3v-6.5006104C21.9998169,12.2234497,21.776001,11.9998169,21.5,12z M4.5,21c-0.828064-0.0009155-1.4990845-0.671936-1.5-1.5V3.3623047l2.7412109,1.5712891c0.1575928,0.0872192,0.348877,0.0875854,0.5068359,0.0009766L9.5,3.0761719l3.2519531,1.8583984c0.157959,0.0866089,0.3492432,0.0862427,0.5068359-0.0009766L16,3.3623047V19c0.0008545,0.7719116,0.3010864,1.4684448,0.7803345,2H4.5z M21,19c0,1.1045532-0.8954468,2-2,2s-2-0.8954468-2-2v-6h4V19z\"></path></svg></div><h6 class=\"text-lg font-medium text-gray-800 mb-2 dark:text-white my-auto\">Total Active Users</h6></div></div><div class=\"mt-2\"><h2 class=\"text-2xl font-semibold text-gray-800 dark:text-white\">")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			var templ_7745c5c3_Var3 string
+			templ_7745c5c3_Var3, templ_7745c5c3_Err = templ.JoinStringErrs(activeUsersCount)
+			if templ_7745c5c3_Err != nil {
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `admin/components/dashboard_layout.templ`, Line: 393, Col: 96}
+			}
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var3))
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 2, " Users</h2></div></div></div></div><div class=\"col-span-12 md:col-span-6 xxl:col-span-3\"><div class=\"box overflow-hidden\"><div class=\"box-body\"><div class=\"flex\"><div class=\"flex space-x-3 rtl:space-x-reverse\"><div class=\"avatar p-2 rounded-sm bg-secondary/10\"><svg class=\"fill-secondary\" xmlns=\"http://www.w3.org/2000/svg\" enable-background=\"new 0 0 24 24\" viewBox=\"0 0 24 24\"><path class=\"fill-secondary\" d=\"M9.5,7h7C16.776123,7,17,6.776123,17,6.5S16.776123,6,16.5,6h-7C9.223877,6,9,6.223877,9,6.5S9.223877,7,9.5,7z M7.5,11h9c0.276123,0,0.5-0.223877,0.5-0.5S16.776123,10,16.5,10h-9C7.223877,10,7,10.223877,7,10.5S7.223877,11,7.5,11z M20.5,2H3.4993896C3.2234497,2.0001831,2.9998169,2.223999,3,2.5v19c-0.000061,0.1124268,0.0378418,0.2216187,0.1074829,0.3098755c0.1710205,0.2167358,0.4853516,0.2537231,0.7020874,0.0827026l2.8652344-2.2617188l2.3583984,1.7695312c0.1777954,0.1328125,0.421814,0.1328125,0.5996094,0L12,19.625l2.3671875,1.7753906c0.1777954,0.1328125,0.421814,0.1328125,0.5996094,0l2.3583984-1.7695312l2.8652344,2.2617188C20.2785034,21.9623413,20.3876343,22.0002441,20.5,22h0.0006104C20.7766113,21.9998169,21.0001831,21.7759399,21,21.5V2.4993896C20.9998169,2.2234497,20.776001,1.9998169,20.5,2z M20,20.46875l-2.3574219-1.8613281c-0.0882568-0.069519-0.1972656-0.1072998-0.3095703-0.1074219c-0.1080933-0.000061-0.2132568,0.0349121-0.2998047,0.0996094L14.6669922,20.375l-2.3671875-1.7753906c-0.1777954-0.1328125-0.421814-0.1328125-0.5996094,0L9.3330078,20.375l-2.3662109-1.7753906c-0.1817017-0.1348877-0.4311523-0.1317139-0.609375,0.0078125L4,20.46875V3h16V20.46875z M7.5,15h9c0.276123,0,0.5-0.223877,0.5-0.5S16.776123,14,16.5,14h-9C7.223877,14,7,14.223877,7,14.5S7.223877,15,7.5,15z\"></path></svg></div><h6 class=\"text-lg font-medium text-gray-800 mb-2 dark:text-white my-auto\">Total Savings</h6></div></div><div class=\"mt-2\"><h2 class=\"text-2xl font-semibold text-gray-800 dark:text-white\">₦ ")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			var templ_7745c5c3_Var4 string
+			templ_7745c5c3_Var4, templ_7745c5c3_Err = templ.JoinStringErrs(formatCurrency(int(ts)))
+			if templ_7745c5c3_Err != nil {
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `admin/components/dashboard_layout.templ`, Line: 416, Col: 107}
+			}
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var4))
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 3, "</h2></div></div></div></div><div class=\"col-span-12 md:col-span-6 xxl:col-span-3\"><div class=\"box overflow-hidden\"><div class=\"box-body\"><div class=\"flex\"><div class=\"flex space-x-3 rtl:space-x-reverse\"><div class=\"avatar p-2 rounded-sm bg-warning/10\"><svg class=\"fill-warning\" xmlns=\"http://www.w3.org/2000/svg\" enable-background=\"new 0 0 24 24\" viewBox=\"0 0 24 24\" id=\"shopping-bag\"><path class=\"fill-warning\" fill=\"#4B5563\" d=\"M19.5,7H16V5.9169922c0-2.2091064-1.7908325-4-4-4s-4,1.7908936-4,4V7H4.5C4.4998169,7,4.4996338,7,4.4993896,7C4.2234497,7.0001831,3.9998169,7.223999,4,7.5V19c0.0018311,1.6561279,1.3438721,2.9981689,3,3h10c1.6561279-0.0018311,2.9981689-1.3438721,3-3V7.5c0-0.0001831,0-0.0003662,0-0.0006104C19.9998169,7.2234497,19.776001,6.9998169,19.5,7z M9,5.9169922c0-1.6568604,1.3431396-3,3-3s3,1.3431396,3,3V7H9V5.9169922z M19,19c-0.0014038,1.1040039-0.8959961,1.9985962-2,2H7c-1.1040039-0.0014038-1.9985962-0.8959961-2-2V8h3v2.5C8,10.776123,8.223877,11,8.5,11S9,10.776123,9,10.5V8h6v2.5c0,0.0001831,0,0.0003662,0,0.0005493C15.0001831,10.7765503,15.223999,11.0001831,15.5,11c0.0001831,0,0.0003662,0,0.0006104,0C15.7765503,10.9998169,16.0001831,10.776001,16,10.5V8h3V19z\"></path></svg></div><h6 class=\"text-lg font-medium text-gray-800 mb-2 dark:text-white my-auto\">Total Investments</h6></div></div><div class=\"mt-2\"><h2 class=\"text-2xl font-semibold text-gray-800 dark:text-white\">₦ ")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			var templ_7745c5c3_Var5 string
+			templ_7745c5c3_Var5, templ_7745c5c3_Err = templ.JoinStringErrs(formatCurrency(int(ia)))
+			if templ_7745c5c3_Err != nil {
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `admin/components/dashboard_layout.templ`, Line: 439, Col: 107}
+			}
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var5))
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 4, "</h2></div></div></div></div><div class=\"col-span-12 md:col-span-6 xxl:col-span-3\"><div class=\"box overflow-hidden\"><div class=\"box-body\"><div class=\"flex\"><div class=\"flex space-x-3 rtl:space-x-reverse\"><div class=\"avatar p-2 rounded-sm bg-success/10\"><svg class=\"fill-success\" xmlns=\"http://www.w3.org/2000/svg\" enable-background=\"new 0 0 24 24\" viewBox=\"0 0 24 24\"><path class=\"fill-success\" d=\"M10.75,8H12h0.0006104H15.5C15.776123,8,16,7.776123,16,7.5S15.776123,7,15.5,7h-3V5.5C12.5,5.223877,12.276123,5,12,5s-0.5,0.223877-0.5,0.5V7h-0.75C9.2312012,7,8,8.2312012,8,9.75s1.2312012,2.75,2.75,2.75h2.5c0.9664917,0,1.75,0.7835083,1.75,1.75S14.2164917,16,13.25,16H8.5C8.223877,16,8,16.223877,8,16.5S8.223877,17,8.5,17h3v1.5c0,0.0001831,0,0.0003662,0,0.0005493C11.5001831,18.7765503,11.723999,19.0001831,12,19c0.0001831,0,0.0003662,0,0.0006104,0c0.2759399-0.0001831,0.4995728-0.223999,0.4993896-0.5V17h0.75c1.5187988,0,2.75-1.2312012,2.75-2.75s-1.2312012-2.75-2.75-2.75h-2.5C9.7835083,11.5,9,10.7164917,9,9.75S9.7835083,8,10.75,8z M12,1C5.9248657,1,1,5.9248657,1,12s4.9248657,11,11,11c6.0722656-0.0068359,10.9931641-4.9277344,11-11C23,5.9248657,18.0751343,1,12,1z M12,22C6.4771729,22,2,17.5228271,2,12S6.4771729,2,12,2c5.5201416,0.0064697,9.9935303,4.4798584,10,10C22,17.5228271,17.5228271,22,12,22z\"></path></svg></div><h6 class=\"text-lg font-medium text-gray-800 mb-2 dark:text-white my-auto\">Tokens</h6></div></div><div class=\"mt-2\"><h2 class=\"text-2xl font-semibold text-gray-800 dark:text-white\">₦ ")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			var templ_7745c5c3_Var6 string
+			templ_7745c5c3_Var6, templ_7745c5c3_Err = templ.JoinStringErrs(tt)
+			if templ_7745c5c3_Err != nil {
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `admin/components/dashboard_layout.templ`, Line: 462, Col: 86}
+			}
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var6))
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 5, "</h2></div></div></div></div></div><div class=\"grid grid-cols-12 gap-x-5\"><div class=\"col-span-12 lg:col-span-12 xxl:col-span-6\"><div class=\"box\"><div class=\"box-header\"><div class=\"flex\"><h5 class=\"box-title my-auto\">Payment Requests</h5></div></div><div class=\"box-body\"><div class=\"overflow-auto\"><table class=\"ti-custom-table ti-custom-table-head\"><thead><tr><th scope=\"col\" class=\"text-center !p-[0.65rem]\">Account name</th><th scope=\"col\" class=\"!p-[0.65rem]\">Bank</th><th scope=\"col\" class=\"!p-[0.65rem]\">Category</th><th scope=\"col\" class=\"!p-[0.65rem]\">Type</th><th scope=\"col\" class=\"!p-[0.65rem]\">Amount</th></tr></thead> <tbody>")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			if len(reqs) == 0 {
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 6, "<td>No requests yet</td>")
+				if templ_7745c5c3_Err != nil {
+					return templ_7745c5c3_Err
+				}
+			} else {
+				for _, req := range reqs {
+					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 7, "<tr><td class=\"leading-none !text-gray-800 dark:!text-white !p-[0.65rem] min-w-[180px] truncate\">")
+					if templ_7745c5c3_Err != nil {
+						return templ_7745c5c3_Err
+					}
+					var templ_7745c5c3_Var7 string
+					templ_7745c5c3_Var7, templ_7745c5c3_Err = templ.JoinStringErrs(req.AccountName)
+					if templ_7745c5c3_Err != nil {
+						return templ.Error{Err: templ_7745c5c3_Err, FileName: `admin/components/dashboard_layout.templ`, Line: 495, Col: 38}
+					}
+					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var7))
+					if templ_7745c5c3_Err != nil {
+						return templ_7745c5c3_Err
+					}
+					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 8, "</td><td class=\"!p-[0.65rem]\">")
+					if templ_7745c5c3_Err != nil {
+						return templ_7745c5c3_Err
+					}
+					var templ_7745c5c3_Var8 string
+					templ_7745c5c3_Var8, templ_7745c5c3_Err = templ.JoinStringErrs(req.BankName)
+					if templ_7745c5c3_Err != nil {
+						return templ.Error{Err: templ_7745c5c3_Err, FileName: `admin/components/dashboard_layout.templ`, Line: 497, Col: 58}
+					}
+					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var8))
+					if templ_7745c5c3_Err != nil {
+						return templ_7745c5c3_Err
+					}
+					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 9, "</td><td class=\"!p-[0.65rem] text-sm\"><span class=\"badge leading-none bg-success/10 text-success rounded-sm\">")
+					if templ_7745c5c3_Err != nil {
+						return templ_7745c5c3_Err
+					}
+					var templ_7745c5c3_Var9 string
+					templ_7745c5c3_Var9, templ_7745c5c3_Err = templ.JoinStringErrs(req.Category)
+					if templ_7745c5c3_Err != nil {
+						return templ.Error{Err: templ_7745c5c3_Err, FileName: `admin/components/dashboard_layout.templ`, Line: 499, Col: 102}
+					}
+					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var9))
+					if templ_7745c5c3_Err != nil {
+						return templ_7745c5c3_Err
+					}
+					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 10, "</span></td><td class=\"!p-[0.65rem]\"><span class=\"text-sm font-semibold\">")
+					if templ_7745c5c3_Err != nil {
+						return templ_7745c5c3_Err
+					}
+					var templ_7745c5c3_Var10 string
+					templ_7745c5c3_Var10, templ_7745c5c3_Err = templ.JoinStringErrs(req.Type)
+					if templ_7745c5c3_Err != nil {
+						return templ.Error{Err: templ_7745c5c3_Err, FileName: `admin/components/dashboard_layout.templ`, Line: 501, Col: 67}
+					}
+					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var10))
+					if templ_7745c5c3_Err != nil {
+						return templ_7745c5c3_Err
+					}
+					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 11, "</span></td><td class=\"!p-[0.65rem]\"><span class=\"text-sm font-semibold\">₦ ")
+					if templ_7745c5c3_Err != nil {
+						return templ_7745c5c3_Err
+					}
+					var templ_7745c5c3_Var11 string
+					templ_7745c5c3_Var11, templ_7745c5c3_Err = templ.JoinStringErrs(FormatCurrencyFromString(req.Amount))
+					if templ_7745c5c3_Err != nil {
+						return templ.Error{Err: templ_7745c5c3_Err, FileName: `admin/components/dashboard_layout.templ`, Line: 504, Col: 99}
+					}
+					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var11))
+					if templ_7745c5c3_Err != nil {
+						return templ_7745c5c3_Err
+					}
+					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 12, "</span></td></tr>")
+					if templ_7745c5c3_Err != nil {
+						return templ_7745c5c3_Err
+					}
+				}
+			}
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 13, "</tbody></table></div></div></div></div><div class=\"col-span-12 lg:col-span-6 xxl:col-span-3\"><div class=\"box\"><div class=\"box-header\"><div class=\"flex\"><h5 class=\"box-title my-auto\">Top Members</h5></div></div><div class=\"box-body\"><ul class=\"flex flex-col\">")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			if len(topUsers) == 0 {
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 14, "<tr><td colspan=\"7\" class=\"text-center text-gray-500\">No users yet</td></tr>")
+				if templ_7745c5c3_Err != nil {
+					return templ_7745c5c3_Err
+				}
+			} else {
+				for _, u := range topUsers {
+					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 15, "<li class=\"px-0 pt-0 ti-list-group border-0 text-gray-800 dark:text-white\"><a href=\"javascript:void(0);\" class=\"flex  justify-between items-center w-full\"><div class=\"flex space-x-3 rtl:space-x-reverse w-full\"><div class=\"flex w-full\"><div class=\"block my-auto\"><p class=\"block text-sm font-semibold text-gray-800 hover:text-gray-900 my-auto  dark:text-white dark:hover:text-gray-200\">")
+					if templ_7745c5c3_Err != nil {
+						return templ_7745c5c3_Err
+					}
+					var templ_7745c5c3_Var12 string
+					templ_7745c5c3_Var12, templ_7745c5c3_Err = templ.JoinStringErrs(u.Username)
+					if templ_7745c5c3_Err != nil {
+						return templ.Error{Err: templ_7745c5c3_Err, FileName: `admin/components/dashboard_layout.templ`, Line: 539, Col: 37}
+					}
+					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var12))
+					if templ_7745c5c3_Err != nil {
+						return templ_7745c5c3_Err
+					}
+					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 16, "</p><p class=\"text-xs text-gray-400 dark:text-white/80 truncate sm:max-w-max max-w-[100px] font-normal\">")
+					if templ_7745c5c3_Err != nil {
+						return templ_7745c5c3_Err
+					}
+					var templ_7745c5c3_Var13 string
+					templ_7745c5c3_Var13, templ_7745c5c3_Err = templ.JoinStringErrs(u.Email)
+					if templ_7745c5c3_Err != nil {
+						return templ.Error{Err: templ_7745c5c3_Err, FileName: `admin/components/dashboard_layout.templ`, Line: 542, Col: 34}
+					}
+					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var13))
+					if templ_7745c5c3_Err != nil {
+						return templ_7745c5c3_Err
+					}
+					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 17, "</p></div></div></div><div class=\"\"><span class=\"text-sm font-medium\">₦&nbsp;")
+					if templ_7745c5c3_Err != nil {
+						return templ_7745c5c3_Err
+					}
+					var templ_7745c5c3_Var14 string
+					templ_7745c5c3_Var14, templ_7745c5c3_Err = templ.JoinStringErrs(formatCurrency(int(u.TotalSavings + u.TotalInvestmentAmount)))
+					if templ_7745c5c3_Err != nil {
+						return templ.Error{Err: templ_7745c5c3_Err, FileName: `admin/components/dashboard_layout.templ`, Line: 546, Col: 137}
+					}
+					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var14))
+					if templ_7745c5c3_Err != nil {
+						return templ_7745c5c3_Err
+					}
+					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 18, "</span></div></a></li>")
+					if templ_7745c5c3_Err != nil {
+						return templ_7745c5c3_Err
+					}
+				}
+			}
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 19, "</ul></div></div></div><div class=\"col-span-12 lg:col-span-6 xxl:col-span-3\"><div class=\"box\"><div class=\"box-header\"><div class=\"flex\"><h5 class=\"box-title my-auto\">Investment Plans</h5><div class=\"hs-dropdown ti-dropdown block ltr:ml-auto rtl:mr-auto my-auto\"><button type=\"button\" aria-label=\"button\" class=\"rounded-sm p-2 bg-white !border border-gray-200 text-gray-500 hover:bg-gray-100  focus:ring-gray-200 dark:bg-black/20 dark:hover:bg-black/30 dark:border-white/10 dark:hover:border-white/20 dark:focus:ring-white/10 dark:focus:ring-offset-white/10\"><span>Create</span></button></div></div></div><div class=\"box-body\"><ul class=\"flex flex-col\">")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			if len(plans) == 0 {
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 20, "<p>No plans yet</p>")
+				if templ_7745c5c3_Err != nil {
+					return templ_7745c5c3_Err
+				}
+			} else {
+				for _, plan := range plans {
+					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 21, "<li class=\"p-0 mb-6 ti-list-group border-0 text-gray-800 dark:text-white\"><a href=\"javascript:void(0);\" class=\"w-full\"><div class=\"flex items-center\"><div class=\"flex-auto ltr:ml-2 rtl:mr-2\"><p class=\"text-sm font-semibold mb-0\">")
+					if templ_7745c5c3_Err != nil {
+						return templ_7745c5c3_Err
+					}
+					var templ_7745c5c3_Var15 string
+					templ_7745c5c3_Var15, templ_7745c5c3_Err = templ.JoinStringErrs(plan.Name)
+					if templ_7745c5c3_Err != nil {
+						return templ.Error{Err: templ_7745c5c3_Err, FileName: `admin/components/dashboard_layout.templ`, Line: 579, Col: 70}
+					}
+					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var15))
+					if templ_7745c5c3_Err != nil {
+						return templ_7745c5c3_Err
+					}
+					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 22, "</p></div><div class=\"block text-end\"><span class=\"text-sm text-success font-semibold\">")
+					if templ_7745c5c3_Err != nil {
+						return templ_7745c5c3_Err
+					}
+					var templ_7745c5c3_Var16 string
+					templ_7745c5c3_Var16, templ_7745c5c3_Err = templ.JoinStringErrs(plan.InterestRate)
+					if templ_7745c5c3_Err != nil {
+						return templ.Error{Err: templ_7745c5c3_Err, FileName: `admin/components/dashboard_layout.templ`, Line: 583, Col: 89}
+					}
+					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var16))
+					if templ_7745c5c3_Err != nil {
+						return templ_7745c5c3_Err
+					}
+					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 23, "%</span><p class=\"text-xs text-gray-400 dark:text-white/80 !font-normal\">₦ ")
+					if templ_7745c5c3_Err != nil {
+						return templ_7745c5c3_Err
+					}
+					var templ_7745c5c3_Var17 string
+					templ_7745c5c3_Var17, templ_7745c5c3_Err = templ.JoinStringErrs(FormatCurrencyFromString(plan.MinAmount))
+					if templ_7745c5c3_Err != nil {
+						return templ.Error{Err: templ_7745c5c3_Err, FileName: `admin/components/dashboard_layout.templ`, Line: 584, Col: 132}
+					}
+					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var17))
+					if templ_7745c5c3_Err != nil {
+						return templ_7745c5c3_Err
+					}
+					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 24, " - ₦ ")
+					if templ_7745c5c3_Err != nil {
+						return templ_7745c5c3_Err
+					}
+					var templ_7745c5c3_Var18 string
+					templ_7745c5c3_Var18, templ_7745c5c3_Err = templ.JoinStringErrs(FormatCurrencyFromString(plan.MaxAmount))
+					if templ_7745c5c3_Err != nil {
+						return templ.Error{Err: templ_7745c5c3_Err, FileName: `admin/components/dashboard_layout.templ`, Line: 585, Col: 69}
+					}
+					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var18))
+					if templ_7745c5c3_Err != nil {
+						return templ_7745c5c3_Err
+					}
+					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 25, "</p></div></div></a></li>")
+					if templ_7745c5c3_Err != nil {
+						return templ_7745c5c3_Err
+					}
+				}
+			}
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 26, "</ul></div></div></div></div><!-- End::row-1 --><!-- Start::row-2 --><!-- End::row-2 --><!-- Start::row-3 --><div class=\"grid grid-cols-12 gap-x-6\"><div class=\"col-span-12\"><div class=\"box\"><div class=\"box-header\"><div class=\"flex\"><h5 class=\"box-title my-auto\">Recent Transactions</h5></div></div><div class=\"box-body\"><div class=\"table-bordered rounded-sm ti-custom-table-head overflow-auto\"><table class=\"ti-custom-table ti-custom-table-head whitespace-nowrap\"><thead class=\"bg-gray-50 dark:bg-black/20\"><tr class=\"\"><th scope=\"col\" class=\"dark:text-white/80\">S.no</th><th scope=\"col\" class=\"dark:text-white/80 min-w-[300px]\">Customer Details</th><th scope=\"col\" class=\"dark:text-white/80\">Ordered Date</th><th scope=\"col\" class=\"dark:text-white/80\">Status</th><th scope=\"col\" class=\"dark:text-white/80\">Price</th><th scope=\"col\" class=\"dark:text-white/80\">Action</th></tr></thead> <tbody class=\"\">")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			if len(trans) == 0 {
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 27, "<tr><td class=\"\">No Pending Transactions</td></tr>")
+				if templ_7745c5c3_Err != nil {
+					return templ_7745c5c3_Err
+				}
+			} else {
+				for i, t := range trans {
+					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 28, "<tr class=\"\"><td>")
+					if templ_7745c5c3_Err != nil {
+						return templ_7745c5c3_Err
+					}
+					var templ_7745c5c3_Var19 string
+					templ_7745c5c3_Var19, templ_7745c5c3_Err = templ.JoinStringErrs(i + 1)
+					if templ_7745c5c3_Err != nil {
+						return templ.Error{Err: templ_7745c5c3_Err, FileName: `admin/components/dashboard_layout.templ`, Line: 635, Col: 30}
+					}
+					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var19))
+					if templ_7745c5c3_Err != nil {
+						return templ_7745c5c3_Err
+					}
+					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 29, "</td><td><div class=\"flex space-x-3 rtl:space-x-reverse text-start\"><div class=\"block my-auto\"><p class=\"block text-sm font-semibold my-auto text-gray-800 dark:text-white\">")
+					if templ_7745c5c3_Err != nil {
+						return templ_7745c5c3_Err
+					}
+					var templ_7745c5c3_Var20 string
+					templ_7745c5c3_Var20, templ_7745c5c3_Err = templ.JoinStringErrs(t.Username)
+					if templ_7745c5c3_Err != nil {
+						return templ.Error{Err: templ_7745c5c3_Err, FileName: `admin/components/dashboard_layout.templ`, Line: 640, Col: 114}
+					}
+					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var20))
+					if templ_7745c5c3_Err != nil {
+						return templ_7745c5c3_Err
+					}
+					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 30, "</p><span class=\"block text-xs text-gray-400 dark:text-white/80 !font-normal my-auto\">")
+					if templ_7745c5c3_Err != nil {
+						return templ_7745c5c3_Err
+					}
+					var templ_7745c5c3_Var21 string
+					templ_7745c5c3_Var21, templ_7745c5c3_Err = templ.JoinStringErrs(t.Email)
+					if templ_7745c5c3_Err != nil {
+						return templ.Error{Err: templ_7745c5c3_Err, FileName: `admin/components/dashboard_layout.templ`, Line: 642, Col: 112}
+					}
+					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var21))
+					if templ_7745c5c3_Err != nil {
+						return templ_7745c5c3_Err
+					}
+					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 31, "</span></div></div></td><td>")
+					if templ_7745c5c3_Err != nil {
+						return templ_7745c5c3_Err
+					}
+					var templ_7745c5c3_Var22 string
+					templ_7745c5c3_Var22, templ_7745c5c3_Err = templ.JoinStringErrs(t.Type)
+					if templ_7745c5c3_Err != nil {
+						return templ.Error{Err: templ_7745c5c3_Err, FileName: `admin/components/dashboard_layout.templ`, Line: 646, Col: 31}
+					}
+					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var22))
+					if templ_7745c5c3_Err != nil {
+						return templ_7745c5c3_Err
+					}
+					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 32, "</td><td><span class=\"truncate whitespace-nowrap inline-block py-1 px-3 rounded-full text-xs font-medium bg-success/10 text-success/80\">")
+					if templ_7745c5c3_Err != nil {
+						return templ_7745c5c3_Err
+					}
+					var templ_7745c5c3_Var23 string
+					templ_7745c5c3_Var23, templ_7745c5c3_Err = templ.JoinStringErrs(t.Status)
+					if templ_7745c5c3_Err != nil {
+						return templ.Error{Err: templ_7745c5c3_Err, FileName: `admin/components/dashboard_layout.templ`, Line: 648, Col: 154}
+					}
+					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var23))
+					if templ_7745c5c3_Err != nil {
+						return templ_7745c5c3_Err
+					}
+					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 33, "</span></td><td>₦ ")
+					if templ_7745c5c3_Err != nil {
+						return templ_7745c5c3_Err
+					}
+					var templ_7745c5c3_Var24 string
+					templ_7745c5c3_Var24, templ_7745c5c3_Err = templ.JoinStringErrs(formatCurrency(int(t.Amount)))
+					if templ_7745c5c3_Err != nil {
+						return templ.Error{Err: templ_7745c5c3_Err, FileName: `admin/components/dashboard_layout.templ`, Line: 650, Col: 58}
+					}
+					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var24))
+					if templ_7745c5c3_Err != nil {
+						return templ_7745c5c3_Err
+					}
+					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 34, "</td><td class=\"font-medium space-x-2 rtl:space-x-reverse\">")
+					if templ_7745c5c3_Err != nil {
+						return templ_7745c5c3_Err
+					}
+					if t.Type == "savings" {
+						templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 35, "<div class=\"hs-tooltip ti-main-tooltip\"><a href=\"\" hx-get=\"")
+						if templ_7745c5c3_Err != nil {
+							return templ_7745c5c3_Err
+						}
+						var templ_7745c5c3_Var25 string
+						templ_7745c5c3_Var25, templ_7745c5c3_Err = templ.JoinStringErrs("/admin/api/approve-payment/" + strconv.Itoa(int(t.ID)))
+						if templ_7745c5c3_Err != nil {
+							return templ.Error{Err: templ_7745c5c3_Err, FileName: `admin/components/dashboard_layout.templ`, Line: 654, Col: 98}
+						}
+						_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var25))
+						if templ_7745c5c3_Err != nil {
+							return templ_7745c5c3_Err
+						}
+						templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 36, "\" hx-trigger=\"click\" hx-swap=\"none\" hx-on=\"htmx:afterRequest: window.location.reload()\" class=\"m-0 hs-tooltip-toggle relative w-8 h-8 ti-btn rounded-full p-0 transition-none focus:outline-none ti-btn-soft-primary\"><i class=\"ti ti-device-mobile-check\"></i> <span class=\"hs-tooltip-content ti-main-tooltip-content py-1 px-2 bg-gray-900 text-xs font-medium text-white shadow-sm dark:bg-slate-700\" role=\"tooltip\">Approve</span></a></div>")
+						if templ_7745c5c3_Err != nil {
+							return templ_7745c5c3_Err
+						}
+					} else {
+						templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 37, "<div class=\"hs-tooltip ti-main-tooltip\"><a href=\"\" hx-get=\"")
+						if templ_7745c5c3_Err != nil {
+							return templ_7745c5c3_Err
+						}
+						var templ_7745c5c3_Var26 string
+						templ_7745c5c3_Var26, templ_7745c5c3_Err = templ.JoinStringErrs("/admin/api/approve-investment/" + strconv.Itoa(int(t.ID)))
+						if templ_7745c5c3_Err != nil {
+							return templ.Error{Err: templ_7745c5c3_Err, FileName: `admin/components/dashboard_layout.templ`, Line: 668, Col: 101}
+						}
+						_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var26))
+						if templ_7745c5c3_Err != nil {
+							return templ_7745c5c3_Err
+						}
+						templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 38, "\" hx-trigger=\"click\" hx-swap=\"none\" hx-on=\"htmx:afterRequest: window.location.reload()\" class=\"m-0 hs-tooltip-toggle relative w-8 h-8 ti-btn rounded-full p-0 transition-none focus:outline-none ti-btn-soft-primary\"><i class=\"ti ti-device-mobile-check\"></i> <span class=\"hs-tooltip-content ti-main-tooltip-content py-1 px-2 bg-gray-900 text-xs font-medium text-white shadow-sm dark:bg-slate-700\" role=\"tooltip\">Approve</span></a></div>")
+						if templ_7745c5c3_Err != nil {
+							return templ_7745c5c3_Err
+						}
+					}
+					if t.Type == "savings" {
+						templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 39, "<div class=\"hs-tooltip ti-main-tooltip\"><a href=\"\" hx-get=\"")
+						if templ_7745c5c3_Err != nil {
+							return templ_7745c5c3_Err
+						}
+						var templ_7745c5c3_Var27 string
+						templ_7745c5c3_Var27, templ_7745c5c3_Err = templ.JoinStringErrs("/admin/api/decline-payment/" + strconv.Itoa(int(t.ID)))
+						if templ_7745c5c3_Err != nil {
+							return templ.Error{Err: templ_7745c5c3_Err, FileName: `admin/components/dashboard_layout.templ`, Line: 684, Col: 98}
+						}
+						_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var27))
+						if templ_7745c5c3_Err != nil {
+							return templ_7745c5c3_Err
+						}
+						templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 40, "\" hx-trigger=\"click\" hx-swap=\"none\" hx-on=\"htmx:afterRequest: window.location.reload()\" class=\"m-0 hs-tooltip-toggle relative w-8 h-8 ti-btn rounded-full p-0 transition-none focus:outline-none ti-btn-soft-danger\"><i class=\"ti ti-device-mobile-x\"></i> <span class=\"hs-tooltip-content ti-main-tooltip-content py-1 px-2 bg-gray-900 text-xs font-medium text-white shadow-sm dark:bg-slate-700\" role=\"tooltip\">Decline</span></a></div>")
+						if templ_7745c5c3_Err != nil {
+							return templ_7745c5c3_Err
+						}
+					} else {
+						templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 41, "<div class=\"hs-tooltip ti-main-tooltip\"><a href=\"#\" hx-get=\"")
+						if templ_7745c5c3_Err != nil {
+							return templ_7745c5c3_Err
+						}
+						var templ_7745c5c3_Var28 string
+						templ_7745c5c3_Var28, templ_7745c5c3_Err = templ.JoinStringErrs("/admin/api/decline-investment/" + strconv.Itoa(int(t.ID)))
+						if templ_7745c5c3_Err != nil {
+							return templ.Error{Err: templ_7745c5c3_Err, FileName: `admin/components/dashboard_layout.templ`, Line: 698, Col: 104}
+						}
+						_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var28))
+						if templ_7745c5c3_Err != nil {
+							return templ_7745c5c3_Err
+						}
+						templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 42, "\" hx-trigger=\"click\" hx-swap=\"none\" hx-on=\"htmx:afterRequest: window.location.reload()\" class=\"m-0 hs-tooltip-toggle relative w-8 h-8 ti-btn rounded-full p-0 transition-none focus:outline-none ti-btn-soft-danger\"><i class=\"ti ti-device-mobile-x\"></i> <span class=\"hs-tooltip-content ti-main-tooltip-content py-1 px-2 bg-gray-900 text-xs font-medium text-white shadow-sm dark:bg-slate-700\" role=\"tooltip\">Decline</span></a></div>")
+						if templ_7745c5c3_Err != nil {
+							return templ_7745c5c3_Err
+						}
+					}
+					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 43, "</td></tr>")
+					if templ_7745c5c3_Err != nil {
+						return templ_7745c5c3_Err
+					}
+				}
+			}
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 44, "</tbody></table></div></div></div></div></div><!-- End::row-3 --><!-- start row 4 --><div class=\"grid grid-cols-12 gap-6\"><div class=\"col-span-12 lg:col-span-6\"><div class=\"box\"><div class=\"box-header\"><h5 class=\"box-title\">Savings</h5></div><div class=\"box-body p-0\"><div class=\"overflow-auto\"><table class=\"ti-custom-table ti-custom-table-head\"><thead><tr><th scope=\"col\">Name</th><th scope=\"col\">Amount</th><th scope=\"col\">Status</th><th scope=\"col\" class=\"!text-end\">Date</th></tr></thead> <tbody>")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			if len(savings) == 0 {
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 45, "<tr><td>No Savings</td></tr>")
+				if templ_7745c5c3_Err != nil {
+					return templ_7745c5c3_Err
+				}
+			} else {
+				for _, sav := range savings {
+					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 46, "<tr><td class=\"font-medium\">")
+					if templ_7745c5c3_Err != nil {
+						return templ_7745c5c3_Err
+					}
+					var templ_7745c5c3_Var29 string
+					templ_7745c5c3_Var29, templ_7745c5c3_Err = templ.JoinStringErrs(sav.Username)
+					if templ_7745c5c3_Err != nil {
+						return templ.Error{Err: templ_7745c5c3_Err, FileName: `admin/components/dashboard_layout.templ`, Line: 751, Col: 69}
+					}
+					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var29))
+					if templ_7745c5c3_Err != nil {
+						return templ_7745c5c3_Err
+					}
+					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 47, "</td><td>")
+					if templ_7745c5c3_Err != nil {
+						return templ_7745c5c3_Err
+					}
+					var templ_7745c5c3_Var30 string
+					templ_7745c5c3_Var30, templ_7745c5c3_Err = templ.JoinStringErrs(sav.Amount)
+					if templ_7745c5c3_Err != nil {
+						return templ.Error{Err: templ_7745c5c3_Err, FileName: `admin/components/dashboard_layout.templ`, Line: 752, Col: 47}
+					}
+					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var30))
+					if templ_7745c5c3_Err != nil {
+						return templ_7745c5c3_Err
+					}
+					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 48, "</td><td><p class=\"text-primary hover:text-primary\">")
+					if templ_7745c5c3_Err != nil {
+						return templ_7745c5c3_Err
+					}
+					var templ_7745c5c3_Var31 string
+					templ_7745c5c3_Var31, templ_7745c5c3_Err = templ.JoinStringErrs(sav.Status)
+					if templ_7745c5c3_Err != nil {
+						return templ.Error{Err: templ_7745c5c3_Err, FileName: `admin/components/dashboard_layout.templ`, Line: 753, Col: 90}
+					}
+					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var31))
+					if templ_7745c5c3_Err != nil {
+						return templ_7745c5c3_Err
+					}
+					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 49, "</p></td><td>")
+					if templ_7745c5c3_Err != nil {
+						return templ_7745c5c3_Err
+					}
+					var templ_7745c5c3_Var32 string
+					templ_7745c5c3_Var32, templ_7745c5c3_Err = templ.JoinStringErrs(formatTime(sav.CreatedAt.Time))
+					if templ_7745c5c3_Err != nil {
+						return templ.Error{Err: templ_7745c5c3_Err, FileName: `admin/components/dashboard_layout.templ`, Line: 755, Col: 63}
+					}
+					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var32))
+					if templ_7745c5c3_Err != nil {
+						return templ_7745c5c3_Err
+					}
+					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 50, "</td></tr>")
+					if templ_7745c5c3_Err != nil {
+						return templ_7745c5c3_Err
+					}
+				}
+			}
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 51, "</tbody></table></div></div></div></div><div class=\"col-span-12 lg:col-span-6\"><div class=\"box\"><div class=\"box-header\"><h5 class=\"box-title\">Investments</h5></div><div class=\"box-body p-0\"><div class=\"overflow-auto\"><table class=\"ti-custom-table ti-custom-table-head ti-striped-table\"><thead><tr><th scope=\"col\">Name</th><th scope=\"col\">Ref Code</th><th scope=\"col\">Plan</th><th scope=\"col\">Amount</th><th scope=\"col\">Status</th><th scope=\"col\">Rate</th><th scope=\"col\">Started</th><th scope=\"col\">Ending</th></tr></thead> <tbody>")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			if len(inv) == 0 {
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 52, "<tr><td>No investments</td></tr>")
+				if templ_7745c5c3_Err != nil {
+					return templ_7745c5c3_Err
+				}
+			} else {
+				for _, i := range inv {
+					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 53, "<tr><td class=\"font-medium\">")
+					if templ_7745c5c3_Err != nil {
+						return templ_7745c5c3_Err
+					}
+					var templ_7745c5c3_Var33 string
+					templ_7745c5c3_Var33, templ_7745c5c3_Err = templ.JoinStringErrs(i.Username)
+					if templ_7745c5c3_Err != nil {
+						return templ.Error{Err: templ_7745c5c3_Err, FileName: `admin/components/dashboard_layout.templ`, Line: 794, Col: 67}
+					}
+					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var33))
+					if templ_7745c5c3_Err != nil {
+						return templ_7745c5c3_Err
+					}
+					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 54, "</td><td>")
+					if templ_7745c5c3_Err != nil {
+						return templ_7745c5c3_Err
+					}
+					var templ_7745c5c3_Var34 string
+					templ_7745c5c3_Var34, templ_7745c5c3_Err = templ.JoinStringErrs(i.ReferenceID)
+					if templ_7745c5c3_Err != nil {
+						return templ.Error{Err: templ_7745c5c3_Err, FileName: `admin/components/dashboard_layout.templ`, Line: 795, Col: 50}
+					}
+					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var34))
+					if templ_7745c5c3_Err != nil {
+						return templ_7745c5c3_Err
+					}
+					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 55, "</td><td>")
+					if templ_7745c5c3_Err != nil {
+						return templ_7745c5c3_Err
+					}
+					var templ_7745c5c3_Var35 string
+					templ_7745c5c3_Var35, templ_7745c5c3_Err = templ.JoinStringErrs(i.PlanName)
+					if templ_7745c5c3_Err != nil {
+						return templ.Error{Err: templ_7745c5c3_Err, FileName: `admin/components/dashboard_layout.templ`, Line: 796, Col: 47}
+					}
+					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var35))
+					if templ_7745c5c3_Err != nil {
+						return templ_7745c5c3_Err
+					}
+					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 56, "</td><td>₦ ")
+					if templ_7745c5c3_Err != nil {
+						return templ_7745c5c3_Err
+					}
+					var templ_7745c5c3_Var36 string
+					templ_7745c5c3_Var36, templ_7745c5c3_Err = templ.JoinStringErrs(formatCurrency(int(i.Amount)))
+					if templ_7745c5c3_Err != nil {
+						return templ.Error{Err: templ_7745c5c3_Err, FileName: `admin/components/dashboard_layout.templ`, Line: 797, Col: 70}
+					}
+					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var36))
+					if templ_7745c5c3_Err != nil {
+						return templ_7745c5c3_Err
+					}
+					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 57, "</td><td><p class=\"text-primary hover:text-primary\">")
+					if templ_7745c5c3_Err != nil {
+						return templ_7745c5c3_Err
+					}
+					var templ_7745c5c3_Var37 string
+					templ_7745c5c3_Var37, templ_7745c5c3_Err = templ.JoinStringErrs(i.Status)
+					if templ_7745c5c3_Err != nil {
+						return templ.Error{Err: templ_7745c5c3_Err, FileName: `admin/components/dashboard_layout.templ`, Line: 798, Col: 88}
+					}
+					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var37))
+					if templ_7745c5c3_Err != nil {
+						return templ_7745c5c3_Err
+					}
+					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 58, "</p></td><td>%")
+					if templ_7745c5c3_Err != nil {
+						return templ_7745c5c3_Err
+					}
+					var templ_7745c5c3_Var38 string
+					templ_7745c5c3_Var38, templ_7745c5c3_Err = templ.JoinStringErrs(i.InterestRate)
+					if templ_7745c5c3_Err != nil {
+						return templ.Error{Err: templ_7745c5c3_Err, FileName: `admin/components/dashboard_layout.templ`, Line: 800, Col: 50}
+					}
+					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var38))
+					if templ_7745c5c3_Err != nil {
+						return templ_7745c5c3_Err
+					}
+					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 59, "</td><td>")
+					if templ_7745c5c3_Err != nil {
+						return templ_7745c5c3_Err
+					}
+					var templ_7745c5c3_Var39 string
+					templ_7745c5c3_Var39, templ_7745c5c3_Err = templ.JoinStringErrs(formatTime(i.CreatedAt))
+					if templ_7745c5c3_Err != nil {
+						return templ.Error{Err: templ_7745c5c3_Err, FileName: `admin/components/dashboard_layout.templ`, Line: 803, Col: 58}
+					}
+					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var39))
+					if templ_7745c5c3_Err != nil {
+						return templ_7745c5c3_Err
+					}
+					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 60, "</td><td>")
+					if templ_7745c5c3_Err != nil {
+						return templ_7745c5c3_Err
+					}
+					var templ_7745c5c3_Var40 string
+					templ_7745c5c3_Var40, templ_7745c5c3_Err = templ.JoinStringErrs(formatTime(i.EndDate.Time))
+					if templ_7745c5c3_Err != nil {
+						return templ.Error{Err: templ_7745c5c3_Err, FileName: `admin/components/dashboard_layout.templ`, Line: 806, Col: 61}
+					}
+					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var40))
+					if templ_7745c5c3_Err != nil {
+						return templ_7745c5c3_Err
+					}
+					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 61, "</td></tr>")
+					if templ_7745c5c3_Err != nil {
+						return templ_7745c5c3_Err
+					}
+				}
+			}
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 62, "</tbody></table></div></div></div></div></div><!-- end row 4 --></div><!-- Start::main-content --></div>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 			return nil
 		})
-		templ_7745c5c3_Err = Base("Gold Savings - Dashboard").Render(templ.WithChildren(ctx, templ_7745c5c3_Var2), templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = Base("GoldCo-op - Dashboard").Render(templ.WithChildren(ctx, templ_7745c5c3_Var2), templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

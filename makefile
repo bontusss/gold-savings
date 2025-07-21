@@ -1,5 +1,5 @@
 run:
-	templ generate --watch --proxy="http://localhost:9000" --cmd="go run ."
+	templ generate --watch --proxy="http://localhost:8080" --cmd="go run ."
 start:
 	templ generate
 	air \

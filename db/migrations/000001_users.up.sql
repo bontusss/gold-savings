@@ -11,6 +11,7 @@ CREATE TABLE
     total_savings_withdrawn INTEGER NOT NULL DEFAULT 0,
     total_investment_amount INTEGER NOT NULL DEFAULT 0,
     total_investment_withdrawn INTEGER NOT NULL DEFAULT 0,
+    total_tokens INTEGER NOT NULL DEFAULT 0,
     reference_id TEXT UNIQUE NOT NULL,
     password_hash TEXT NOT NULL,
     account_number TEXT,

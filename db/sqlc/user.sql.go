@@ -28,7 +28,7 @@ func (q *Queries) CountActiveUsers(ctx context.Context) (int64, error) {
 const createUser = `-- name: CreateUser :one
 INSERT INTO users (email, password_hash, username, phone, reference_id)
 VALUES ($1, $2, $3, $4, $5)
-RETURNING id, username, email, phone, total_savings, total_savings_withdrawn, total_investment_amount, total_investment_withdrawn, reference_id, password_hash, account_number, bank_name, token_balance, is_active, email_verified, verification_code, verification_expires_at, created_at, updated_at
+RETURNING id, username, email, phone, total_savings, total_savings_withdrawn, total_investment_amount, total_investment_withdrawn, total_tokens, reference_id, password_hash, account_number, bank_name, token_balance, is_active, email_verified, verification_code, verification_expires_at, created_at, updated_at
 `
 
 type CreateUserParams struct {
@@ -57,6 +57,7 @@ func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (User, e
 		&i.TotalSavingsWithdrawn,
 		&i.TotalInvestmentAmount,
 		&i.TotalInvestmentWithdrawn,
+		&i.TotalTokens,
 		&i.ReferenceID,
 		&i.PasswordHash,
 		&i.AccountNumber,
@@ -90,8 +91,41 @@ func (q *Queries) DeleteUsers(ctx context.Context) error {
 	return err
 }
 
+const getTotalInvestmentInApp = `-- name: GetTotalInvestmentInApp :one
+SELECT COALESCE(SUM(total_investment_amount), 0)::INTEGER AS total FROM users
+`
+
+func (q *Queries) GetTotalInvestmentInApp(ctx context.Context) (int32, error) {
+	row := q.db.QueryRowContext(ctx, getTotalInvestmentInApp)
+	var total int32
+	err := row.Scan(&total)
+	return total, err
+}
+
+const getTotalSavingsInApp = `-- name: GetTotalSavingsInApp :one
+SELECT COALESCE(SUM(total_savings), 0)::INTEGER AS total FROM users
+`
+
+func (q *Queries) GetTotalSavingsInApp(ctx context.Context) (int32, error) {
+	row := q.db.QueryRowContext(ctx, getTotalSavingsInApp)
+	var total int32
+	err := row.Scan(&total)
+	return total, err
+}
+
+const getTotalTokens = `-- name: GetTotalTokens :one
+SELECT COALESCE(SUM(total_tokens), 0)::INTEGER AS total FROM users
+`
+
+func (q *Queries) GetTotalTokens(ctx context.Context) (int32, error) {
+	row := q.db.QueryRowContext(ctx, getTotalTokens)
+	var total int32
+	err := row.Scan(&total)
+	return total, err
+}
+
 const getUser = `-- name: GetUser :one
-SELECT id, username, email, phone, total_savings, total_savings_withdrawn, total_investment_amount, total_investment_withdrawn, reference_id, password_hash, account_number, bank_name, token_balance, is_active, email_verified, verification_code, verification_expires_at, created_at, updated_at FROM users WHERE id = $1 LIMIT 1
+SELECT id, username, email, phone, total_savings, total_savings_withdrawn, total_investment_amount, total_investment_withdrawn, total_tokens, reference_id, password_hash, account_number, bank_name, token_balance, is_active, email_verified, verification_code, verification_expires_at, created_at, updated_at FROM users WHERE id = $1 LIMIT 1
 `
 
 func (q *Queries) GetUser(ctx context.Context, id uuid.UUID) (User, error) {
@@ -106,6 +140,7 @@ func (q *Queries) GetUser(ctx context.Context, id uuid.UUID) (User, error) {
 		&i.TotalSavingsWithdrawn,
 		&i.TotalInvestmentAmount,
 		&i.TotalInvestmentWithdrawn,
+		&i.TotalTokens,
 		&i.ReferenceID,
 		&i.PasswordHash,
 		&i.AccountNumber,
@@ -122,7 +157,7 @@ func (q *Queries) GetUser(ctx context.Context, id uuid.UUID) (User, error) {
 }
 
 const getUserByEmail = `-- name: GetUserByEmail :one
-SELECT id, username, email, phone, total_savings, total_savings_withdrawn, total_investment_amount, total_investment_withdrawn, reference_id, password_hash, account_number, bank_name, token_balance, is_active, email_verified, verification_code, verification_expires_at, created_at, updated_at FROM users
+SELECT id, username, email, phone, total_savings, total_savings_withdrawn, total_investment_amount, total_investment_withdrawn, total_tokens, reference_id, password_hash, account_number, bank_name, token_balance, is_active, email_verified, verification_code, verification_expires_at, created_at, updated_at FROM users
 WHERE email = $1 LIMIT 1
 `
 
@@ -138,6 +173,7 @@ func (q *Queries) GetUserByEmail(ctx context.Context, email string) (User, error
 		&i.TotalSavingsWithdrawn,
 		&i.TotalInvestmentAmount,
 		&i.TotalInvestmentWithdrawn,
+		&i.TotalTokens,
 		&i.ReferenceID,
 		&i.PasswordHash,
 		&i.AccountNumber,
@@ -151,6 +187,32 @@ func (q *Queries) GetUserByEmail(ctx context.Context, email string) (User, error
 		&i.UpdatedAt,
 	)
 	return i, err
+}
+
+const getUserInvestmentBalance = `-- name: GetUserInvestmentBalance :one
+SELECT total_investment_amount
+FROM users
+WHERE id = $1
+`
+
+func (q *Queries) GetUserInvestmentBalance(ctx context.Context, id uuid.UUID) (int32, error) {
+	row := q.db.QueryRowContext(ctx, getUserInvestmentBalance, id)
+	var total_investment_amount int32
+	err := row.Scan(&total_investment_amount)
+	return total_investment_amount, err
+}
+
+const getUserTokens = `-- name: GetUserTokens :one
+SELECT total_tokens
+FROM users
+WHERE id = $1
+`
+
+func (q *Queries) GetUserTokens(ctx context.Context, id uuid.UUID) (int32, error) {
+	row := q.db.QueryRowContext(ctx, getUserTokens, id)
+	var total_tokens int32
+	err := row.Scan(&total_tokens)
+	return total_tokens, err
 }
 
 const getUserTotalSavings = `-- name: GetUserTotalSavings :one
@@ -167,7 +229,7 @@ func (q *Queries) GetUserTotalSavings(ctx context.Context, id uuid.UUID) (int32,
 }
 
 const listUsers = `-- name: ListUsers :many
-SELECT id, username, email, phone, total_savings, total_savings_withdrawn, total_investment_amount, total_investment_withdrawn, reference_id, password_hash, account_number, bank_name, token_balance, is_active, email_verified, verification_code, verification_expires_at, created_at, updated_at FROM users ORDER BY created_at DESC
+SELECT id, username, email, phone, total_savings, total_savings_withdrawn, total_investment_amount, total_investment_withdrawn, total_tokens, reference_id, password_hash, account_number, bank_name, token_balance, is_active, email_verified, verification_code, verification_expires_at, created_at, updated_at FROM users ORDER BY created_at DESC
 `
 
 func (q *Queries) ListUsers(ctx context.Context) ([]User, error) {
@@ -188,6 +250,59 @@ func (q *Queries) ListUsers(ctx context.Context) ([]User, error) {
 			&i.TotalSavingsWithdrawn,
 			&i.TotalInvestmentAmount,
 			&i.TotalInvestmentWithdrawn,
+			&i.TotalTokens,
+			&i.ReferenceID,
+			&i.PasswordHash,
+			&i.AccountNumber,
+			&i.BankName,
+			&i.TokenBalance,
+			&i.IsActive,
+			&i.EmailVerified,
+			&i.VerificationCode,
+			&i.VerificationExpiresAt,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listUsersByTotalSavingsDesc = `-- name: ListUsersByTotalSavingsDesc :many
+SELECT id, username, email, phone, total_savings, total_savings_withdrawn, total_investment_amount, total_investment_withdrawn, total_tokens, reference_id, password_hash, account_number, bank_name, token_balance, is_active, email_verified, verification_code, verification_expires_at, created_at, updated_at
+FROM users
+WHERE total_savings > 0
+ORDER BY total_savings DESC
+LIMIT 10
+`
+
+func (q *Queries) ListUsersByTotalSavingsDesc(ctx context.Context) ([]User, error) {
+	rows, err := q.db.QueryContext(ctx, listUsersByTotalSavingsDesc)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []User{}
+	for rows.Next() {
+		var i User
+		if err := rows.Scan(
+			&i.ID,
+			&i.Username,
+			&i.Email,
+			&i.Phone,
+			&i.TotalSavings,
+			&i.TotalSavingsWithdrawn,
+			&i.TotalInvestmentAmount,
+			&i.TotalInvestmentWithdrawn,
+			&i.TotalTokens,
 			&i.ReferenceID,
 			&i.PasswordHash,
 			&i.AccountNumber,
@@ -234,7 +349,7 @@ func (q *Queries) MarkUserEmailVerified(ctx context.Context, arg MarkUserEmailVe
 }
 
 const searchUsers = `-- name: SearchUsers :many
-SELECT id, username, email, phone, total_savings, total_savings_withdrawn, total_investment_amount, total_investment_withdrawn, reference_id, password_hash, account_number, bank_name, token_balance, is_active, email_verified, verification_code, verification_expires_at, created_at, updated_at FROM users
+SELECT id, username, email, phone, total_savings, total_savings_withdrawn, total_investment_amount, total_investment_withdrawn, total_tokens, reference_id, password_hash, account_number, bank_name, token_balance, is_active, email_verified, verification_code, verification_expires_at, created_at, updated_at FROM users
 WHERE
     (first_name ILIKE '%' || $1 || '%' OR
      last_name ILIKE '%' || $1 || '%' OR
@@ -261,6 +376,7 @@ func (q *Queries) SearchUsers(ctx context.Context, dollar_1 sql.NullString) ([]U
 			&i.TotalSavingsWithdrawn,
 			&i.TotalInvestmentAmount,
 			&i.TotalInvestmentWithdrawn,
+			&i.TotalTokens,
 			&i.ReferenceID,
 			&i.PasswordHash,
 			&i.AccountNumber,
@@ -350,5 +466,24 @@ type UpdateUserTotalSavingsParams struct {
 
 func (q *Queries) UpdateUserTotalSavings(ctx context.Context, arg UpdateUserTotalSavingsParams) error {
 	_, err := q.db.ExecContext(ctx, updateUserTotalSavings, arg.ID, arg.TotalSavings)
+	return err
+}
+
+const updateUsernameEmail = `-- name: UpdateUsernameEmail :exec
+UPDATE users
+SET email = $2,
+    username = $3,
+    updated_at = NOW()
+WHERE id = $1
+`
+
+type UpdateUsernameEmailParams struct {
+	ID       uuid.UUID `json:"id"`
+	Email    string    `json:"email"`
+	Username string    `json:"username"`
+}
+
+func (q *Queries) UpdateUsernameEmail(ctx context.Context, arg UpdateUsernameEmailParams) error {
+	_, err := q.db.ExecContext(ctx, updateUsernameEmail, arg.ID, arg.Email, arg.Username)
 	return err
 }

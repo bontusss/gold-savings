@@ -38,5 +38,8 @@ func SetupRoutes(router *gin.RouterGroup, authService *auth.Service, queries *db
 		protected.POST("/investment", userHandler.CreateInvestment)
 		protected.GET("/investments", userHandler.ListUserInvestments)
 		protected.GET("/user/me", userHandler.GetUser)
+		protected.GET("/user/savings_balance", userHandler.GetUserSavingsBalance)
+		protected.GET("/user/investment_balance", userHandler.GetUserInvestmentBalance)
+		protected.POST("/user/update", userHandler.UpdateEmailAndUsername)
 	}
 }

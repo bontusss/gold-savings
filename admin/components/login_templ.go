@@ -53,7 +53,7 @@ func Login(errorm string) templ.Component {
 				var templ_7745c5c3_Var3 string
 				templ_7745c5c3_Var3, templ_7745c5c3_Err = templ.JoinStringErrs(errorm)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `admin/components/login.templ`, Line: 12, Col: 14}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `admin/components/login.templ`, Line: 12, Col: 11}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var3))
 				if templ_7745c5c3_Err != nil {
@@ -64,7 +64,7 @@ func Login(errorm string) templ.Component {
 					return templ_7745c5c3_Err
 				}
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 4, "<form hx-post=\"/admin/login\" hx-target=\"body\"><div class=\"mb-4\"><label class=\"block text-gray-700 text-sm font-bold mb-2\" for=\"email\">Email</label> <input class=\"shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline\" id=\"email\" name=\"email\" type=\"email\" placeholder=\"Email\" required></div><div class=\"mb-6\"><label class=\"block text-gray-700 text-sm font-bold mb-2\" for=\"password\">Password</label> <input class=\"shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 mb-3 leading-tight focus:outline-none focus:shadow-outline\" id=\"password\" name=\"password\" type=\"password\" placeholder=\"Password\" required></div><div class=\"flex items-center justify-between\"><button class=\"bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline\" type=\"submit\">Sign In</button> <a class=\"inline-block align-baseline font-bold text-sm text-blue-500 hover:text-blue-800\" href=\"/admin/register\">Register</a></div></form></div></div>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 4, "<form hx-post=\"/admin/login\" hx-target=\"body\"><div class=\"mb-4\"><label class=\"block text-gray-700 text-sm font-bold mb-2\" for=\"email\">Email</label> <input class=\"shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline\" id=\"email\" name=\"email\" type=\"email\" placeholder=\"Email\" required></div><div class=\"mb-6\"><label class=\"block text-gray-700 text-sm font-bold mb-2\" for=\"password\">Password</label> <input class=\"shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 mb-3 leading-tight focus:outline-none focus:shadow-outline\" id=\"password\" name=\"password\" type=\"password\" placeholder=\"Password\" required></div><div class=\"flex items-center justify-between\"><button class=\"bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline\" type=\"submit\">Sign In</button></div></form></div></div>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}

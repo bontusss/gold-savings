@@ -4,12 +4,12 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"fmt"
 	"gold-savings/api/utils"
 	db "gold-savings/db/sqlc"
 	"gold-savings/internal/config"
+	"log"
 	"net/http"
-
-	"github.com/google/uuid"
 )
 
 type Admin struct {
@@ -88,25 +88,38 @@ func (a *Admin) ApprovePayment(ctx context.Context, id int32, status, reason str
 	return nil
 }
 
-func (a *Admin) ApproveInvestment(ctx context.Context, id uuid.UUID, status string) error {
-	args := db.UpdateInvestmentStatusParams{
+func (a *Admin) ApproveInvestment(ctx context.Context, id int32, status, reason string) error {
+	args := db.UpdateTransactionStatusParams{
 		ID:     id,
-		Status: status,
+		Status: "deposit",
 	}
-	if err := a.queries.UpdateInvestmentStatus(ctx, args); err != nil {
-		return errors.New("failed to update investment status: " + err.Error())
+	if err := a.queries.UpdateTransactionStatus(ctx, args); err != nil {
+		return errors.New("failed to update Transaction status: " + err.Error())
 	}
 
-	inv, err := a.queries.GetInvestmentByID(ctx, id)
+	trans, err := a.queries.GetTransactionByID(ctx, id)
 	if err != nil {
-		return errors.New("failed to get investment: " + err.Error())
+		return errors.New("failed to get transaction: " + err.Error())
 	}
 
-	userID, err := a.queries.GetUserFromInestmentID(ctx, id)
+	investment, err := a.queries.GetInvestmentByID(ctx, trans.InvestmentID.UUID)
 	if err != nil {
-		return errors.New("failed to get user from investment ID: " + err.Error())
+		return fmt.Errorf("error getting investment id: %v", err)
+	}
+	iParam := db.UpdateInvestmentStatusParams{
+		ID:     investment.ID,
+		Status: "active",
 	}
 
+	err = a.queries.UpdateInvestmentStatus(ctx, iParam)
+	if err != nil {
+		return fmt.Errorf("error updating investment status: %v", err)
+	}
+
+	userID, err := a.queries.GetUserFromTransactionID(ctx, id)
+	if err != nil {
+		return err
+	}
 	user, err := a.queries.GetUser(ctx, userID)
 	if err != nil {
 		return errors.New("failed to get user: " + err.Error())
@@ -114,10 +127,131 @@ func (a *Admin) ApproveInvestment(ctx context.Context, id uuid.UUID, status stri
 
 	arg := db.UpdateUserTotalInvestmentBalanceParams{
 		ID:                    user.ID,
-		TotalInvestmentAmount: user.TotalInvestmentAmount + inv.Amount,
+		TotalInvestmentAmount: user.TotalInvestmentAmount + trans.Amount,
 	}
 	if err := a.queries.UpdateUserTotalInvestmentBalance(ctx, arg); err != nil {
 		return errors.New("failed to update user total investment balance: " + err.Error())
+	}
+
+	// Optionally, you can add logic to notify the user about the status update
+	emailbody, _ := utils.RenderEmailTemplate("templates/transaction_update.html", map[string]any{
+		"Username":      user.Username,
+		"Status":        status,
+		"Amount":        trans.Amount,
+		"Reason":        reason,
+		"TransactionID": trans.ID,
+		"Type":          trans.Type,
+	})
+	plunk := utils.Plunk{
+		HttpClient: http.DefaultClient,
+		Config:     a.config,
+	}
+	err = plunk.SendEmail(user.Email, "Transaction Status Update", emailbody)
+	if err != nil {
+		return errors.New("failed to send email notification: " + err.Error())
+	}
+
+	return nil
+}
+
+func (a *Admin) DeclinePayment(ctx context.Context, id int32, status, reason string) error {
+	args := db.UpdateTransactionStatusParams{
+		ID:     id,
+		Status: "declined",
+		Reason: sql.NullString{String: reason, Valid: reason != ""},
+	}
+	if err := a.queries.UpdateTransactionStatus(ctx, args); err != nil {
+		return errors.New("failed to update transaction status: " + err.Error())
+	}
+
+	trans, err := a.queries.GetTransactionByID(ctx, id)
+	if err != nil {
+		return errors.New("failed to get transaction: " + err.Error())
+	}
+	log.Printf("transaction status is %s", trans.Status)
+
+	userID, err := a.queries.GetUserFromTransactionID(ctx, id)
+	if err != nil {
+		return err
+	}
+	user, err := a.queries.GetUser(ctx, userID)
+	if err != nil {
+		return errors.New("failed to get user: " + err.Error())
+	}
+
+	// Optionally, you can add logic to notify the user about the status update
+	emailbody, _ := utils.RenderEmailTemplate("templates/transaction_update.html", map[string]any{
+		"Username":      user.Username,
+		"Status":        trans.Status,
+		"Amount":        trans.Amount,
+		"Reason":        reason,
+		"TransactionID": trans.ID,
+		"Type":          trans.Type,
+	})
+	plunk := utils.Plunk{
+		HttpClient: http.DefaultClient,
+		Config:     a.config,
+	}
+	err = plunk.SendEmail(user.Email, "Transaction Status Update", emailbody)
+	if err != nil {
+		return errors.New("failed to send email notification: " + err.Error())
+	}
+	return nil
+}
+
+func (a *Admin) DeclineInvestment(ctx context.Context, id int32, status, reason string) error {
+	args := db.UpdateTransactionStatusParams{
+		ID:     id,
+		Status: "declined",
+	}
+	if err := a.queries.UpdateTransactionStatus(ctx, args); err != nil {
+		return errors.New("failed to update Transaction status: " + err.Error())
+	}
+
+	trans, err := a.queries.GetTransactionByID(ctx, id)
+	if err != nil {
+		return errors.New("failed to get transaction: " + err.Error())
+	}
+
+	investment, err := a.queries.GetInvestmentByID(ctx, trans.InvestmentID.UUID)
+	if err != nil {
+		return fmt.Errorf("error getting investment id: %v", err)
+	}
+	iParam := db.UpdateInvestmentStatusParams{
+		ID:     investment.ID,
+		Status: "cancelled",
+	}
+
+	err = a.queries.UpdateInvestmentStatus(ctx, iParam)
+	if err != nil {
+		return fmt.Errorf("error updating investment status: %v", err)
+	}
+
+	userID, err := a.queries.GetUserFromTransactionID(ctx, id)
+	if err != nil {
+		return err
+	}
+	user, err := a.queries.GetUser(ctx, userID)
+	if err != nil {
+		return errors.New("failed to get user: " + err.Error())
+	}
+
+	// Optionally, you can add logic to notify the user about the status update
+	emailbody, _ := utils.RenderEmailTemplate("templates/transaction_update.html", map[string]any{
+		"Username":      user.Username,
+		"Status":        trans.Status,
+		"Amount":        trans.Amount,
+		"Reason":        reason,
+		"TransactionID": trans.ID,
+		"Type":          trans.Type,
+	})
+	plunk := utils.Plunk{
+		HttpClient: http.DefaultClient,
+		Config:     a.config,
+	}
+	err = plunk.SendEmail(user.Email, "Transaction Status Update", emailbody)
+	if err != nil {
+		return errors.New("failed to send email notification: " + err.Error())
 	}
 
 	return nil
