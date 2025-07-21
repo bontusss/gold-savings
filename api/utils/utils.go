@@ -5,11 +5,10 @@ import (
 	"math/rand"
 
 	"github.com/gin-gonic/gin"
-	"github.com/google/uuid"
 )
 
 type LoggedInUser struct {
-	ID      string
+	ID      int32
 	Email   string
 	IsAdmin bool
 }
@@ -28,23 +27,17 @@ func GetLoggedInUser(c *gin.Context) (*LoggedInUser, error) {
 	email, _ := c.Get("email")
 
 	return &LoggedInUser{
-		ID:    id.(string),
+		ID:    id.(int32),
 		Email: email.(string),
 	}, nil
 }
 
-func GetActiveUserID(c *gin.Context) (userID uuid.UUID, err error) {
+func GetActiveUserID(c *gin.Context) (userID int32, err error) {
 	user, err := GetLoggedInUser(c)
 	if err != nil {
-		return uuid.Nil, err
+		return 0, err
 	}
-
-	userID, err = uuid.Parse(user.ID)
-	if err != nil {
-		return uuid.Nil, fmt.Errorf("error parsing user ID: %v", err)
-	}
-
-	return userID, nil
+	return user.ID, nil
 }
 
 const letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"

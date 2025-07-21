@@ -11,7 +11,6 @@ import (
 	"gold-savings/internal/auth"
 	"gold-savings/internal/config"
 
-	"github.com/google/uuid"
 	"github.com/shopspring/decimal"
 )
 
@@ -64,9 +63,9 @@ func (s *UserService) ListUsers(id string) (*[]db.User, error) {
 	return &users, nil
 }
 
-func (s *UserService) UpdateStatus(userid string, isActive bool) error {
+func (s *UserService) UpdateStatus(userid int32, isActive bool) error {
 	err := s.queries.UpdateUserStatus(context.Background(), db.UpdateUserStatusParams{
-		ID:       uuid.MustParse(userid),
+		ID:       userid,
 		IsActive: sql.NullBool{Bool: isActive, Valid: true},
 	})
 	if err != nil {
@@ -83,7 +82,7 @@ func (s *UserService) GetInvestmentPlans(ctx context.Context) (*[]db.InvestmentP
 	return &plans, nil
 }
 
-func (s *UserService) CreateSavingsPaymentRequest(ctx context.Context, userID uuid.UUID, amount decimal.Decimal, bankName, account_name, account_number string) (*db.PayoutRequest, error) {
+func (s *UserService) CreateSavingsPaymentRequest(ctx context.Context, userID int32, amount decimal.Decimal, bankName, account_name, account_number string) (*db.PayoutRequest, error) {
 	args := db.CreatePayoutRequestParams{
 		UserID:      userID,
 		Amount:      amount.String(),
@@ -143,12 +142,12 @@ func (s *UserService) CreateSavingsPaymentRequest(ctx context.Context, userID uu
 	return &payment, nil
 }
 
-func (s *UserService) CreateInvestmentPaymentRequest(ctx context.Context, userID uuid.UUID, investment_id uuid.NullUUID, amount decimal.Decimal, bankName, account_name string) (*db.PayoutRequest, error) {
+func (s *UserService) CreateInvestmentPaymentRequest(ctx context.Context, userID int32, investment_id int32, amount decimal.Decimal, bankName, account_name string) (*db.PayoutRequest, error) {
 	args := db.CreatePayoutRequestParams{
 		UserID:       userID,
 		BankName:     bankName,
 		AccountName:  account_name,
-		InvestmentID: investment_id,
+		InvestmentID: sql.NullInt32{Valid: true, Int32: investment_id},
 		Type:         string(InvestmentRequest),
 		Category:     string(DepositTransaction),
 		Amount:       amount.String(),
@@ -200,7 +199,7 @@ func (s *UserService) CreateInvestmentPaymentRequest(ctx context.Context, userID
 	return &payment, nil
 }
 
-func (s *UserService) CreateTransaction(ctx context.Context, userID uuid.UUID, investmentID uuid.NullUUID, amount decimal.Decimal, Ttype string) (*db.Transaction, error) {
+func (s *UserService) CreateTransaction(ctx context.Context, userID int32, investmentID sql.NullInt32, amount decimal.Decimal, Ttype string) (*db.Transaction, error) {
 	args := db.CreateTransactionParams{
 		UserID:       userID,
 		Amount:       int32(amount.IntPart()),
@@ -216,7 +215,7 @@ func (s *UserService) CreateTransaction(ctx context.Context, userID uuid.UUID, i
 	return &transaction, nil
 }
 
-func (s *UserService) GetUserSavingsTransactions(ctx context.Context, userID uuid.UUID) (*[]db.Transaction, error) {
+func (s *UserService) GetUserSavingsTransactions(ctx context.Context, userID int32) (*[]db.Transaction, error) {
 	transactions, err := s.queries.ListUserSavingsTransactions(ctx, userID)
 	if err != nil {
 		return nil, err
@@ -224,7 +223,7 @@ func (s *UserService) GetUserSavingsTransactions(ctx context.Context, userID uui
 	return &transactions, nil
 }
 
-func (s *UserService) GetUserInvestmentTransactions(ctx context.Context, userID uuid.UUID) (*[]db.Transaction, error) {
+func (s *UserService) GetUserInvestmentTransactions(ctx context.Context, userID int32) (*[]db.Transaction, error) {
 	transactions, err := s.queries.ListUserInvestmentTransactions(ctx, userID)
 	if err != nil {
 		return nil, err
@@ -232,7 +231,7 @@ func (s *UserService) GetUserInvestmentTransactions(ctx context.Context, userID 
 	return &transactions, nil
 }
 
-func (s *UserService) CreateInvestment(ctx context.Context, userID uuid.UUID, planID int32, amount decimal.Decimal) (*db.Investment, error) {
+func (s *UserService) CreateInvestment(ctx context.Context, userID int32, planID int32, amount decimal.Decimal) (*db.Investment, error) {
 	iPlan, err := s.queries.GetInvestmentPlanByID(ctx, planID)
 	if err != nil {
 		return nil, err
@@ -270,7 +269,7 @@ func (s *UserService) CreateInvestment(ctx context.Context, userID uuid.UUID, pl
 	return &investment, nil
 }
 
-func (s *UserService) GetUserInvestments(ctx context.Context, userID uuid.UUID) (*[]db.Investment, error) {
+func (s *UserService) GetUserInvestments(ctx context.Context, userID int32) (*[]db.Investment, error) {
 	investments, err := s.queries.ListInvestmentsByUser(ctx, userID)
 	if err != nil {
 		return nil, err
@@ -278,7 +277,7 @@ func (s *UserService) GetUserInvestments(ctx context.Context, userID uuid.UUID) 
 	return &investments, nil
 }
 
-func (s *UserService) GetUserInvestmentsWithPlan(ctx context.Context, userID uuid.UUID) ([]db.ListUserInvestmentsWithPlanRow, error) {
+func (s *UserService) GetUserInvestmentsWithPlan(ctx context.Context, userID int32) ([]db.ListUserInvestmentsWithPlanRow, error) {
 	investments, err := s.queries.ListUserInvestmentsWithPlan(ctx, userID)
 	if err != nil {
 		return nil, err
@@ -302,7 +301,7 @@ func (s *UserService) GetInvestmentByRefCode(ctx context.Context, refCode string
 	return &pr, nil
 }
 
-func (s *UserService) GetUserByID(ctx context.Context, userID uuid.UUID) (*db.User, error) {
+func (s *UserService) GetUserByID(ctx context.Context, userID int32) (*db.User, error) {
 	user, err := s.queries.GetUser(ctx, userID)
 	if err != nil {
 		return nil, err
@@ -310,7 +309,7 @@ func (s *UserService) GetUserByID(ctx context.Context, userID uuid.UUID) (*db.Us
 	return &user, nil
 }
 
-func (s *UserService) GetUserSavingsBalance(ctx context.Context, userID uuid.UUID) (int32, error) {
+func (s *UserService) GetUserSavingsBalance(ctx context.Context, userID int32) (int32, error) {
 	totalSavings, err := s.queries.GetUserTotalSavings(ctx, userID)
 	if err != nil {
 		return 0, fmt.Errorf("error getting user savings balance: %v", err)
@@ -318,7 +317,7 @@ func (s *UserService) GetUserSavingsBalance(ctx context.Context, userID uuid.UUI
 	return totalSavings, nil
 }
 
-func (s *UserService) GetUserInvestmentBalance(ctx context.Context, userID uuid.UUID) (int32, error) {
+func (s *UserService) GetUserInvestmentBalance(ctx context.Context, userID int32) (int32, error) {
 	totalSavings, err := s.queries.GetUserInvestmentBalance(ctx, userID)
 	if err != nil {
 		return 0, fmt.Errorf("error getting user savings balance: %v", err)
@@ -326,7 +325,7 @@ func (s *UserService) GetUserInvestmentBalance(ctx context.Context, userID uuid.
 	return totalSavings, nil
 }
 
-func (s *UserService) UpdateEmailAndUsername(ctx context.Context, email, username string, id uuid.UUID) error {
+func (s *UserService) UpdateEmailAndUsername(ctx context.Context, email, username string, id int32) error {
 	args := db.UpdateUsernameEmailParams{
 		ID:       id,
 		Username: username,

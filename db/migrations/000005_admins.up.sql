@@ -1,6 +1,6 @@
 CREATE TABLE
   admins (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4 (),
+    id SERIAL PRIMARY KEY,
     email TEXT UNIQUE NOT NULL,
     password_hash TEXT NOT NULL,
     created_at TIMESTAMP DEFAULT NOW (),

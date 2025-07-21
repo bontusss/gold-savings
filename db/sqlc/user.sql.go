@@ -8,8 +8,6 @@ package db
 import (
 	"context"
 	"database/sql"
-
-	"github.com/google/uuid"
 )
 
 const countActiveUsers = `-- name: CountActiveUsers :one
@@ -77,7 +75,7 @@ const deleteUserByID = `-- name: DeleteUserByID :exec
 DELETE FROM users WHERE id = $1
 `
 
-func (q *Queries) DeleteUserByID(ctx context.Context, id uuid.UUID) error {
+func (q *Queries) DeleteUserByID(ctx context.Context, id int32) error {
 	_, err := q.db.ExecContext(ctx, deleteUserByID, id)
 	return err
 }
@@ -128,7 +126,7 @@ const getUser = `-- name: GetUser :one
 SELECT id, username, email, phone, total_savings, total_savings_withdrawn, total_investment_amount, total_investment_withdrawn, total_tokens, reference_id, password_hash, account_number, bank_name, token_balance, is_active, email_verified, verification_code, verification_expires_at, created_at, updated_at FROM users WHERE id = $1 LIMIT 1
 `
 
-func (q *Queries) GetUser(ctx context.Context, id uuid.UUID) (User, error) {
+func (q *Queries) GetUser(ctx context.Context, id int32) (User, error) {
 	row := q.db.QueryRowContext(ctx, getUser, id)
 	var i User
 	err := row.Scan(
@@ -195,7 +193,7 @@ FROM users
 WHERE id = $1
 `
 
-func (q *Queries) GetUserInvestmentBalance(ctx context.Context, id uuid.UUID) (int32, error) {
+func (q *Queries) GetUserInvestmentBalance(ctx context.Context, id int32) (int32, error) {
 	row := q.db.QueryRowContext(ctx, getUserInvestmentBalance, id)
 	var total_investment_amount int32
 	err := row.Scan(&total_investment_amount)
@@ -208,7 +206,7 @@ FROM users
 WHERE id = $1
 `
 
-func (q *Queries) GetUserTokens(ctx context.Context, id uuid.UUID) (int32, error) {
+func (q *Queries) GetUserTokens(ctx context.Context, id int32) (int32, error) {
 	row := q.db.QueryRowContext(ctx, getUserTokens, id)
 	var total_tokens int32
 	err := row.Scan(&total_tokens)
@@ -221,7 +219,7 @@ FROM users
 WHERE id = $1
 `
 
-func (q *Queries) GetUserTotalSavings(ctx context.Context, id uuid.UUID) (int32, error) {
+func (q *Queries) GetUserTotalSavings(ctx context.Context, id int32) (int32, error) {
 	row := q.db.QueryRowContext(ctx, getUserTotalSavings, id)
 	var total_savings int32
 	err := row.Scan(&total_savings)
@@ -338,7 +336,7 @@ WHERE id = $1
 `
 
 type MarkUserEmailVerifiedParams struct {
-	ID               uuid.UUID      `json:"id"`
+	ID               int32          `json:"id"`
 	EmailVerified    bool           `json:"email_verified"`
 	VerificationCode sql.NullString `json:"verification_code"`
 }
@@ -411,7 +409,7 @@ WHERE id = $1
 `
 
 type SetUserEmailVerificationParams struct {
-	ID                    uuid.UUID      `json:"id"`
+	ID                    int32          `json:"id"`
 	VerificationCode      sql.NullString `json:"verification_code"`
 	VerificationExpiresAt sql.NullTime   `json:"verification_expires_at"`
 }
@@ -426,7 +424,7 @@ UPDATE users SET is_active = $2, updated_at = NOW() WHERE id = $1
 `
 
 type UpdateUserStatusParams struct {
-	ID       uuid.UUID    `json:"id"`
+	ID       int32        `json:"id"`
 	IsActive sql.NullBool `json:"is_active"`
 }
 
@@ -443,8 +441,8 @@ WHERE id = $1
 `
 
 type UpdateUserTotalInvestmentBalanceParams struct {
-	ID                    uuid.UUID `json:"id"`
-	TotalInvestmentAmount int32     `json:"total_investment_amount"`
+	ID                    int32 `json:"id"`
+	TotalInvestmentAmount int32 `json:"total_investment_amount"`
 }
 
 func (q *Queries) UpdateUserTotalInvestmentBalance(ctx context.Context, arg UpdateUserTotalInvestmentBalanceParams) error {
@@ -460,8 +458,8 @@ WHERE id = $1
 `
 
 type UpdateUserTotalSavingsParams struct {
-	ID           uuid.UUID `json:"id"`
-	TotalSavings int32     `json:"total_savings"`
+	ID           int32 `json:"id"`
+	TotalSavings int32 `json:"total_savings"`
 }
 
 func (q *Queries) UpdateUserTotalSavings(ctx context.Context, arg UpdateUserTotalSavingsParams) error {
@@ -478,9 +476,9 @@ WHERE id = $1
 `
 
 type UpdateUsernameEmailParams struct {
-	ID       uuid.UUID `json:"id"`
-	Email    string    `json:"email"`
-	Username string    `json:"username"`
+	ID       int32  `json:"id"`
+	Email    string `json:"email"`
+	Username string `json:"username"`
 }
 
 func (q *Queries) UpdateUsernameEmail(ctx context.Context, arg UpdateUsernameEmailParams) error {

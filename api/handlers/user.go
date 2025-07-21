@@ -1,12 +1,12 @@
 package handlers
 
 import (
+	"database/sql"
 	"gold-savings/api/utils"
 	"gold-savings/internal/services"
 	"log"
 
 	"github.com/gin-gonic/gin"
-	"github.com/google/uuid"
 	"github.com/shopspring/decimal"
 )
 
@@ -62,8 +62,7 @@ func (s *userHandler) CreateSavingsPaymentRequest(c *gin.Context) {
 		c.JSON(500, serverError)
 		return
 	}
-	investmentID := uuid.NullUUID{Valid: false}
-
+	investmentID := sql.NullInt32{Valid: false}
 
 	transaction, err := s.userService.CreateTransaction(c, userID, investmentID, amountDecimal, payment.Type)
 	if err != nil {
@@ -112,15 +111,14 @@ func (s *userHandler) CreateInvestmentPaymentRequest(c *gin.Context) {
 	}
 
 	// Convert uuid.UUID to uuid.NullUUID
-	investmentID := uuid.NullUUID{UUID: iID.ID, Valid: true}
+	investmentID := iID.ID
 	payment, err := s.userService.CreateInvestmentPaymentRequest(c, userID, investmentID, amountDecimal, req.BankName, req.AccountName)
 	if err != nil {
 		log.Printf("error creating payment request: %v", err)
 		c.JSON(500, serverError)
 		return
 	}
-
-	transaction, err := s.userService.CreateTransaction(c, userID, investmentID, amountDecimal, payment.Type)
+	transaction, err := s.userService.CreateTransaction(c, userID, sql.NullInt32{Valid: true, Int32: investmentID}, amountDecimal, payment.Type)
 	if err != nil {
 		log.Printf("error creating transaction: %v", err)
 		c.JSON(500, serverError)

@@ -6,10 +6,11 @@
 package middleware
 
 import (
-	"github.com/gin-gonic/gin"
 	"gold-savings/internal/auth"
 	"net/http"
 	"strings"
+
+	"github.com/gin-gonic/gin"
 )
 
 // auth TODO:
@@ -45,10 +46,27 @@ func JWTAuthMiddleware(authService *auth.Service) gin.HandlerFunc {
 			return
 		}
 
-		// Set user information in context
-		c.Set("userID", claims["sub"])
-		c.Set("email", claims["email"])
-		c.Set("isAdmin", claims["is_admin"])
+		subFloat, ok := claims["sub"].(float64)
+		if !ok {
+			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
+				"error": "Invalid user ID in token",
+			})
+			return
+		}
+
+		emailStr, ok := claims["email"].(string)
+		if !ok {
+			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
+				"error": "Invalid email in token",
+			})
+			return
+		}
+
+		isAdmin, _ := claims["is_admin"].(bool)
+
+		c.Set("userID", int32(subFloat))
+		c.Set("email", emailStr)
+		c.Set("isAdmin", isAdmin)
 
 		c.Next()
 	}

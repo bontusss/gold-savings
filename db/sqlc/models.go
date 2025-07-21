@@ -7,12 +7,10 @@ package db
 import (
 	"database/sql"
 	"time"
-
-	"github.com/google/uuid"
 )
 
 type Admin struct {
-	ID           uuid.UUID    `json:"id"`
+	ID           int32        `json:"id"`
 	Email        string       `json:"email"`
 	PasswordHash string       `json:"password_hash"`
 	CreatedAt    sql.NullTime `json:"created_at"`
@@ -20,8 +18,8 @@ type Admin struct {
 }
 
 type Investment struct {
-	ID           uuid.UUID    `json:"id"`
-	UserID       uuid.UUID    `json:"user_id"`
+	ID           int32        `json:"id"`
+	UserID       int32        `json:"user_id"`
 	PlanID       int32        `json:"plan_id"`
 	ReferenceID  string       `json:"reference_id"`
 	Amount       int32        `json:"amount"`
@@ -46,10 +44,10 @@ type InvestmentPlan struct {
 
 type PayoutRequest struct {
 	ID           int32         `json:"id"`
-	UserID       uuid.UUID     `json:"user_id"`
+	UserID       int32         `json:"user_id"`
 	AccountName  string        `json:"account_name"`
 	BankName     string        `json:"bank_name"`
-	InvestmentID uuid.NullUUID `json:"investment_id"`
+	InvestmentID sql.NullInt32 `json:"investment_id"`
 	Type         string        `json:"type"`
 	Category     string        `json:"category"`
 	Amount       string        `json:"amount"`
@@ -58,8 +56,8 @@ type PayoutRequest struct {
 }
 
 type Saving struct {
-	ID        uuid.UUID    `json:"id"`
-	UserID    uuid.UUID    `json:"user_id"`
+	ID        int32        `json:"id"`
+	UserID    int32        `json:"user_id"`
 	Amount    string       `json:"amount"`
 	CreatedAt sql.NullTime `json:"created_at"`
 	UpdatedAt sql.NullTime `json:"updated_at"`
@@ -67,9 +65,9 @@ type Saving struct {
 
 type Transaction struct {
 	ID           int32          `json:"id"`
-	UserID       uuid.UUID      `json:"user_id"`
+	UserID       int32          `json:"user_id"`
 	Amount       int32          `json:"amount"`
-	InvestmentID uuid.NullUUID  `json:"investment_id"`
+	InvestmentID sql.NullInt32  `json:"investment_id"`
 	Type         string         `json:"type"`
 	Status       string         `json:"status"`
 	Reason       sql.NullString `json:"reason"`
@@ -78,7 +76,7 @@ type Transaction struct {
 }
 
 type User struct {
-	ID                       uuid.UUID      `json:"id"`
+	ID                       int32          `json:"id"`
 	Username                 string         `json:"username"`
 	Email                    string         `json:"email"`
 	Phone                    string         `json:"phone"`

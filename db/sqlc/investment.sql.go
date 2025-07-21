@@ -9,8 +9,6 @@ import (
 	"context"
 	"database/sql"
 	"time"
-
-	"github.com/google/uuid"
 )
 
 const createInvestment = `-- name: CreateInvestment :one
@@ -23,13 +21,13 @@ RETURNING id, user_id, plan_id, reference_id, amount, interest, interest_rate, s
 `
 
 type CreateInvestmentParams struct {
-	UserID       uuid.UUID `json:"user_id"`
-	PlanID       int32     `json:"plan_id"`
-	Amount       int32     `json:"amount"`
-	Interest     string    `json:"interest"`
-	InterestRate string    `json:"interest_rate"`
-	Status       string    `json:"status"`
-	ReferenceID  string    `json:"reference_id"`
+	UserID       int32  `json:"user_id"`
+	PlanID       int32  `json:"plan_id"`
+	Amount       int32  `json:"amount"`
+	Interest     string `json:"interest"`
+	InterestRate string `json:"interest_rate"`
+	Status       string `json:"status"`
+	ReferenceID  string `json:"reference_id"`
 }
 
 func (q *Queries) CreateInvestment(ctx context.Context, arg CreateInvestmentParams) (Investment, error) {
@@ -70,8 +68,8 @@ RETURNING id, user_id, amount, created_at, updated_at
 `
 
 type CreateSavingsParams struct {
-	UserID uuid.UUID `json:"user_id"`
-	Amount string    `json:"amount"`
+	UserID int32  `json:"user_id"`
+	Amount string `json:"amount"`
 }
 
 func (q *Queries) CreateSavings(ctx context.Context, arg CreateSavingsParams) (Saving, error) {
@@ -92,7 +90,7 @@ DELETE FROM investments
 WHERE id = $1
 `
 
-func (q *Queries) DeleteInvestment(ctx context.Context, id uuid.UUID) error {
+func (q *Queries) DeleteInvestment(ctx context.Context, id int32) error {
 	_, err := q.db.ExecContext(ctx, deleteInvestment, id)
 	return err
 }
@@ -102,7 +100,7 @@ DELETE FROM savings
 WHERE id = $1
 `
 
-func (q *Queries) DeleteSavings(ctx context.Context, id uuid.UUID) error {
+func (q *Queries) DeleteSavings(ctx context.Context, id int32) error {
 	_, err := q.db.ExecContext(ctx, deleteSavings, id)
 	return err
 }
@@ -112,7 +110,7 @@ SELECT id, user_id, plan_id, reference_id, amount, interest, interest_rate, stat
 WHERE id = $1
 `
 
-func (q *Queries) GetInvestmentByID(ctx context.Context, id uuid.UUID) (Investment, error) {
+func (q *Queries) GetInvestmentByID(ctx context.Context, id int32) (Investment, error) {
 	row := q.db.QueryRowContext(ctx, getInvestmentByID, id)
 	var i Investment
 	err := row.Scan(
@@ -162,7 +160,7 @@ SELECT id, user_id, amount, created_at, updated_at FROM savings
 WHERE id = $1
 `
 
-func (q *Queries) GetSavingsByID(ctx context.Context, id uuid.UUID) (Saving, error) {
+func (q *Queries) GetSavingsByID(ctx context.Context, id int32) (Saving, error) {
 	row := q.db.QueryRowContext(ctx, getSavingsByID, id)
 	var i Saving
 	err := row.Scan(
@@ -180,9 +178,9 @@ SELECT user_id FROM investments
 WHERE id = $1
 `
 
-func (q *Queries) GetUserFromInestmentID(ctx context.Context, id uuid.UUID) (uuid.UUID, error) {
+func (q *Queries) GetUserFromInestmentID(ctx context.Context, id int32) (int32, error) {
 	row := q.db.QueryRowContext(ctx, getUserFromInestmentID, id)
-	var user_id uuid.UUID
+	var user_id int32
 	err := row.Scan(&user_id)
 	return user_id, err
 }
@@ -235,7 +233,7 @@ WHERE user_id = $1
 ORDER BY created_at DESC
 `
 
-func (q *Queries) ListInvestmentsByUser(ctx context.Context, userID uuid.UUID) ([]Investment, error) {
+func (q *Queries) ListInvestmentsByUser(ctx context.Context, userID int32) ([]Investment, error) {
 	rows, err := q.db.QueryContext(ctx, listInvestmentsByUser, userID)
 	if err != nil {
 		return nil, err
@@ -298,7 +296,7 @@ ORDER BY investments.created_at DESC
 `
 
 type ListInvestmentsWithUserAndPlanRow struct {
-	ID           uuid.UUID    `json:"id"`
+	ID           int32        `json:"id"`
 	ReferenceID  string       `json:"reference_id"`
 	Amount       int32        `json:"amount"`
 	Interest     string       `json:"interest"`
@@ -308,7 +306,7 @@ type ListInvestmentsWithUserAndPlanRow struct {
 	EndDate      sql.NullTime `json:"end_date"`
 	CreatedAt    time.Time    `json:"created_at"`
 	UpdatedAt    time.Time    `json:"updated_at"`
-	UserID       uuid.UUID    `json:"user_id"`
+	UserID       int32        `json:"user_id"`
 	Username     string       `json:"username"`
 	Email        string       `json:"email"`
 	PlanID       int32        `json:"plan_id"`
@@ -360,7 +358,7 @@ WHERE user_id = $1
 ORDER BY created_at DESC
 `
 
-func (q *Queries) ListSavingsByUserID(ctx context.Context, userID uuid.UUID) ([]Saving, error) {
+func (q *Queries) ListSavingsByUserID(ctx context.Context, userID int32) ([]Saving, error) {
 	rows, err := q.db.QueryContext(ctx, listSavingsByUserID, userID)
 	if err != nil {
 		return nil, err
@@ -400,8 +398,8 @@ ORDER BY i.created_at DESC
 `
 
 type ListUserInvestmentsWithPlanRow struct {
-	ID           uuid.UUID    `json:"id"`
-	UserID       uuid.UUID    `json:"user_id"`
+	ID           int32        `json:"id"`
+	UserID       int32        `json:"user_id"`
 	PlanID       int32        `json:"plan_id"`
 	ReferenceID  string       `json:"reference_id"`
 	Amount       int32        `json:"amount"`
@@ -415,7 +413,7 @@ type ListUserInvestmentsWithPlanRow struct {
 	PlanName     string       `json:"plan_name"`
 }
 
-func (q *Queries) ListUserInvestmentsWithPlan(ctx context.Context, userID uuid.UUID) ([]ListUserInvestmentsWithPlanRow, error) {
+func (q *Queries) ListUserInvestmentsWithPlan(ctx context.Context, userID int32) ([]ListUserInvestmentsWithPlanRow, error) {
 	rows, err := q.db.QueryContext(ctx, listUserInvestmentsWithPlan, userID)
 	if err != nil {
 		return nil, err
@@ -459,8 +457,8 @@ WHERE id = $1
 `
 
 type UpdateInvestmentInterestParams struct {
-	ID       uuid.UUID `json:"id"`
-	Interest string    `json:"interest"`
+	ID       int32  `json:"id"`
+	Interest string `json:"interest"`
 }
 
 func (q *Queries) UpdateInvestmentInterest(ctx context.Context, arg UpdateInvestmentInterestParams) error {
@@ -475,8 +473,8 @@ WHERE id = $1
 `
 
 type UpdateInvestmentStatusParams struct {
-	ID     uuid.UUID `json:"id"`
-	Status string    `json:"status"`
+	ID     int32  `json:"id"`
+	Status string `json:"status"`
 }
 
 func (q *Queries) UpdateInvestmentStatus(ctx context.Context, arg UpdateInvestmentStatusParams) error {
@@ -493,8 +491,8 @@ RETURNING id, user_id, amount, created_at, updated_at
 `
 
 type UpdateSavingsAmountParams struct {
-	ID     uuid.UUID `json:"id"`
-	Amount string    `json:"amount"`
+	ID     int32  `json:"id"`
+	Amount string `json:"amount"`
 }
 
 func (q *Queries) UpdateSavingsAmount(ctx context.Context, arg UpdateSavingsAmountParams) (Saving, error) {

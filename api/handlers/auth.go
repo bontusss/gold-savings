@@ -94,7 +94,7 @@ func (h *AuthHandler) Register(c *gin.Context) {
 	expiry := time.Now().Add(10 * time.Minute)
 
 	// Save code and expiry to user (implement this in your service/repo)
-	err = h.authService.SetEmailVerification(c.Request.Context(), user.User.ID.String(), code, expiry)
+	err = h.authService.SetEmailVerification(c.Request.Context(), user.User.ID, code, expiry)
 	if err != nil {
 		log.Printf("error saving verification code: %v", err)
 	}

@@ -8,8 +8,6 @@ package db
 import (
 	"context"
 	"database/sql"
-
-	"github.com/google/uuid"
 )
 
 const createAdmin = `-- name: CreateAdmin :one
@@ -24,7 +22,7 @@ type CreateAdminParams struct {
 }
 
 type CreateAdminRow struct {
-	ID        uuid.UUID    `json:"id"`
+	ID        int32        `json:"id"`
 	Email     string       `json:"email"`
 	CreatedAt sql.NullTime `json:"created_at"`
 }

@@ -102,7 +102,7 @@ func (a *Admin) ApproveInvestment(ctx context.Context, id int32, status, reason 
 		return errors.New("failed to get transaction: " + err.Error())
 	}
 
-	investment, err := a.queries.GetInvestmentByID(ctx, trans.InvestmentID.UUID)
+	investment, err := a.queries.GetInvestmentByID(ctx, trans.InvestmentID.Int32)
 	if err != nil {
 		return fmt.Errorf("error getting investment id: %v", err)
 	}
@@ -213,7 +213,7 @@ func (a *Admin) DeclineInvestment(ctx context.Context, id int32, status, reason 
 		return errors.New("failed to get transaction: " + err.Error())
 	}
 
-	investment, err := a.queries.GetInvestmentByID(ctx, trans.InvestmentID.UUID)
+	investment, err := a.queries.GetInvestmentByID(ctx, trans.InvestmentID.Int32)
 	if err != nil {
 		return fmt.Errorf("error getting investment id: %v", err)
 	}

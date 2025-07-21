@@ -2,8 +2,8 @@
 
 CREATE TABLE
   savings (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4 (),
-    user_id UUID NOT NULL REFERENCES users (id) ON DELETE CASCADE,
+    id SERIAL PRIMARY KEY,
+    user_id INTEGER NOT NULL REFERENCES users (id) ON DELETE CASCADE,
     amount NUMERIC(12, 2) NOT NULL,
     created_at TIMESTAMP DEFAULT NOW (),
     updated_at TIMESTAMP DEFAULT NOW ()
@@ -14,8 +14,8 @@ CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
 -- Create the investments table
 CREATE TABLE investments (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-  user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  id SERIAL PRIMARY KEY,
+  user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
   plan_id INTEGER NOT NULL REFERENCES investment_plans(id) ON DELETE CASCADE,
   reference_id TEXT NOT NULL, -- unique reference for the investment
   amount INTEGER NOT NULL CHECK (amount > 0), -- total amount invested
@@ -55,9 +55,9 @@ CREATE INDEX idx_investments_plan_id ON investments (plan_id);
 CREATE TABLE
   transactions (
     id SERIAL PRIMARY KEY,
-    user_id UUID NOT NULL REFERENCES users (id) ON DELETE CASCADE,
+    user_id INTEGER NOT NULL REFERENCES users (id) ON DELETE CASCADE,
     amount INTEGER NOT NULL CHECK (amount > 0),
-    investment_id UUID UNIQUE REFERENCES investments (id) ON DELETE SET NULL,
+    investment_id INTEGER REFERENCES investments (id) ON DELETE SET NULL,
     type TEXT NOT NULL CHECK (type IN ('savings', 'investment')),
     status TEXT NOT NULL CHECK (
       status IN ('deposit', 'withdrawal', 'pending', 'declined')
@@ -70,10 +70,10 @@ CREATE TABLE
 CREATE TABLE
   payout_requests (
     id SERIAL PRIMARY KEY,
-    user_id UUID NOT NULL REFERENCES users (id) ON DELETE CASCADE,
+    user_id INTEGER NOT NULL REFERENCES users (id) ON DELETE CASCADE,
     account_name TEXT NOT NULL,
     bank_name TEXT NOT NULL,
-    investment_id UUID UNIQUE REFERENCES investments (id) ON DELETE SET NULL,
+    investment_id INTEGER REFERENCES investments (id) ON DELETE SET NULL,
     type TEXT NOT NULL CHECK (type IN ('savings', 'investment')),
     category TEXT NOT NULL CHECK (category IN ('deposit', 'withdrawal')),
     amount NUMERIC(12, 2) NOT NULL CHECK (amount > 0),

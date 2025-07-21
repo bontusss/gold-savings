@@ -8,8 +8,6 @@ package db
 import (
 	"context"
 	"database/sql"
-
-	"github.com/google/uuid"
 )
 
 const createPayoutRequest = `-- name: CreatePayoutRequest :one
@@ -22,10 +20,10 @@ RETURNING id, user_id, account_name, bank_name, investment_id, type, category, a
 `
 
 type CreatePayoutRequestParams struct {
-	UserID       uuid.UUID     `json:"user_id"`
+	UserID       int32         `json:"user_id"`
 	AccountName  string        `json:"account_name"`
 	BankName     string        `json:"bank_name"`
-	InvestmentID uuid.NullUUID `json:"investment_id"`
+	InvestmentID sql.NullInt32 `json:"investment_id"`
 	Type         string        `json:"type"`
 	Category     string        `json:"category"`
 	Amount       string        `json:"amount"`
@@ -67,10 +65,10 @@ RETURNING id, user_id, amount, investment_id, type, status, reason, created_at, 
 `
 
 type CreateTransactionParams struct {
-	UserID       uuid.UUID      `json:"user_id"`
+	UserID       int32          `json:"user_id"`
 	Amount       int32          `json:"amount"`
 	Type         string         `json:"type"`
-	InvestmentID uuid.NullUUID  `json:"investment_id"`
+	InvestmentID sql.NullInt32  `json:"investment_id"`
 	Status       string         `json:"status"`
 	Reason       sql.NullString `json:"reason"`
 }
@@ -187,9 +185,9 @@ SELECT user_id FROM transactions
 WHERE id = $1
 `
 
-func (q *Queries) GetUserFromTransactionID(ctx context.Context, id int32) (uuid.UUID, error) {
+func (q *Queries) GetUserFromTransactionID(ctx context.Context, id int32) (int32, error) {
 	row := q.db.QueryRowContext(ctx, getUserFromTransactionID, id)
-	var user_id uuid.UUID
+	var user_id int32
 	err := row.Scan(&user_id)
 	return user_id, err
 }
@@ -318,7 +316,7 @@ WHERE user_id = $1
 ORDER BY created_at DESC
 `
 
-func (q *Queries) ListPayoutRequestsByUserID(ctx context.Context, userID uuid.UUID) ([]PayoutRequest, error) {
+func (q *Queries) ListPayoutRequestsByUserID(ctx context.Context, userID int32) ([]PayoutRequest, error) {
 	rows, err := q.db.QueryContext(ctx, listPayoutRequestsByUserID, userID)
 	if err != nil {
 		return nil, err
@@ -372,7 +370,7 @@ ORDER BY t.created_at DESC
 
 type ListPendingTransactionsWithUserRow struct {
 	ID        int32          `json:"id"`
-	UserID    uuid.UUID      `json:"user_id"`
+	UserID    int32          `json:"user_id"`
 	Amount    int32          `json:"amount"`
 	Type      string         `json:"type"`
 	Status    string         `json:"status"`
@@ -429,9 +427,9 @@ ORDER BY transactions.created_at DESC
 
 type ListTransactionsByTypeRow struct {
 	ID           int32          `json:"id"`
-	UserID       uuid.UUID      `json:"user_id"`
+	UserID       int32          `json:"user_id"`
 	Amount       int32          `json:"amount"`
-	InvestmentID uuid.NullUUID  `json:"investment_id"`
+	InvestmentID sql.NullInt32  `json:"investment_id"`
 	Type         string         `json:"type"`
 	Status       string         `json:"status"`
 	Reason       sql.NullString `json:"reason"`
@@ -480,7 +478,7 @@ WHERE user_id = $1
 ORDER BY created_at DESC
 `
 
-func (q *Queries) ListTransactionsByUserID(ctx context.Context, userID uuid.UUID) ([]Transaction, error) {
+func (q *Queries) ListTransactionsByUserID(ctx context.Context, userID int32) ([]Transaction, error) {
 	rows, err := q.db.QueryContext(ctx, listTransactionsByUserID, userID)
 	if err != nil {
 		return nil, err
@@ -520,7 +518,7 @@ WHERE user_id = $1
 ORDER BY created_at DESC
 `
 
-func (q *Queries) ListUserInvestmentTransactions(ctx context.Context, userID uuid.UUID) ([]Transaction, error) {
+func (q *Queries) ListUserInvestmentTransactions(ctx context.Context, userID int32) ([]Transaction, error) {
 	rows, err := q.db.QueryContext(ctx, listUserInvestmentTransactions, userID)
 	if err != nil {
 		return nil, err
@@ -560,7 +558,7 @@ WHERE user_id = $1
 ORDER BY created_at DESC
 `
 
-func (q *Queries) ListUserSavingsTransactions(ctx context.Context, userID uuid.UUID) ([]Transaction, error) {
+func (q *Queries) ListUserSavingsTransactions(ctx context.Context, userID int32) ([]Transaction, error) {
 	rows, err := q.db.QueryContext(ctx, listUserSavingsTransactions, userID)
 	if err != nil {
 		return nil, err

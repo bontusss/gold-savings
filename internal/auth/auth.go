@@ -18,7 +18,6 @@ import (
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
-	"github.com/google/uuid"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -141,7 +140,7 @@ func (a *Service) DeleteUsers(ctx context.Context) error {
 	return nil
 }
 
-func (a *Service) DeleteUserByID(ctx context.Context, userID uuid.UUID) error {
+func (a *Service) DeleteUserByID(ctx context.Context, userID int32) error {
 	err := a.queries.DeleteUserByID(ctx, userID)
 	if err != nil {
 		return err
@@ -199,13 +198,9 @@ func (a *Service) ValidateToken(tokenString string) (jwt.MapClaims, error) {
 // ...existing code...
 
 // SetEmailVerification sets the verification code and expiry for a user.
-func (a *Service) SetEmailVerification(ctx context.Context, userID string, code string, expiry time.Time) error {
-	uid, err := uuid.Parse(userID)
-	if err != nil {
-		return err
-	}
+func (a *Service) SetEmailVerification(ctx context.Context, userID int32, code string, expiry time.Time) error {
 	return a.queries.SetUserEmailVerification(ctx, db.SetUserEmailVerificationParams{
-		ID:                    uid,
+		ID:                    userID,
 		VerificationCode:      sql.NullString{Valid: true, String: code},
 		VerificationExpiresAt: sql.NullTime{Valid: true, Time: expiry},
 	})
