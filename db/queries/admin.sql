@@ -8,8 +8,8 @@ SELECT * FROM admins
 WHERE email = $1 LIMIT 1;
 
 -- name: CreateInvestmentPlan :one
-INSERT INTO investment_plans (name, interest_rate, min_amount, max_amount)
-VALUES ($1, $2, $3, $4)
+INSERT INTO investment_plans (name, interest_rate, min_amount, max_amount, description)
+VALUES ($1, $2, $3, $4, $5)
 RETURNING *;
 
 -- name: GetAllInvestmentPlans :many

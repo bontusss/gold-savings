@@ -1,8 +1,8 @@
 -- name: CreateTransaction :one
 INSERT INTO transactions (
-  user_id, amount, type, investment_id, status, reason
+  user_id, amount, type, investment_id, status, reason, category
 ) VALUES (
-  $1, $2, $3, $4, $5, $6
+  $1, $2, $3, $4, $5, $6, $7
 )
 RETURNING *;
 
@@ -22,7 +22,7 @@ ORDER BY created_at DESC;
 -- name: ListUserSavingsTransactions :many
 SELECT * FROM transactions
 WHERE user_id = $1
-  AND type = 'savings'
+  AND category = 'savings'
 ORDER BY created_at DESC;
 
 -- name: ListUserInvestmentTransactions :many
@@ -31,13 +31,13 @@ WHERE user_id = $1
   AND type = 'investment'
 ORDER BY created_at DESC;
 
--- name: ListTransactionsByType :many
+-- name: ListTransactionsByCategory :many
 SELECT
   transactions.*,
   users.username
 FROM transactions
 JOIN users ON users.id = transactions.user_id
-WHERE transactions.type = $1
+WHERE transactions.category = $1
 ORDER BY transactions.created_at DESC;
 
 
@@ -52,7 +52,7 @@ WHERE id = $1;
 SELECT * FROM transactions
 WHERE status = 'rejected';
 
--- name: ListPendingTransactionsWithUser :many
+-- name: ListPendingDepositTransactionsWithUser :many
 SELECT
   t.id,
   t.user_id,
@@ -67,16 +67,32 @@ SELECT
 FROM transactions t
 JOIN users u ON t.user_id = u.id
 WHERE t.status = 'pending'
+AND t.type = 'deposit'
 ORDER BY t.created_at DESC;
 
-
-
+-- name: ListPendingWithdrawalTransactionsWithUser :many
+SELECT
+  t.id,
+  t.user_id,
+  t.amount,
+  t.type,
+  t.status,
+  t.reason,
+  t.created_at,
+  t.updated_at,
+  u.username,
+  u.email
+FROM transactions t
+JOIN users u ON t.user_id = u.id
+WHERE t.status = 'pending'
+AND t.type = 'withdrawal'
+ORDER BY t.created_at DESC;
 
 -- name: CreatePayoutRequest :one
 INSERT INTO payout_requests (
-  user_id, account_name, bank_name, investment_id, type, category, amount
+  user_id, account_name, bank_name,account_number, investment_id, type, category, amount, phone_number
 ) VALUES (
-  $1, $2, $3, $4, $5, $6, $7
+  $1, $2, $3, $4, $5, $6, $7, $8, $9
 )
 RETURNING *;
 

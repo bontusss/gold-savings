@@ -12,21 +12,23 @@ import (
 
 const createPayoutRequest = `-- name: CreatePayoutRequest :one
 INSERT INTO payout_requests (
-  user_id, account_name, bank_name, investment_id, type, category, amount
+  user_id, account_name, bank_name,account_number, investment_id, type, category, amount, phone_number
 ) VALUES (
-  $1, $2, $3, $4, $5, $6, $7
+  $1, $2, $3, $4, $5, $6, $7, $8, $9
 )
-RETURNING id, user_id, account_name, bank_name, investment_id, type, category, amount, created_at, updated_at
+RETURNING id, user_id, account_name, phone_number, bank_name, account_number, investment_id, type, category, amount, created_at, updated_at
 `
 
 type CreatePayoutRequestParams struct {
-	UserID       int32         `json:"user_id"`
-	AccountName  string        `json:"account_name"`
-	BankName     string        `json:"bank_name"`
-	InvestmentID sql.NullInt32 `json:"investment_id"`
-	Type         string        `json:"type"`
-	Category     string        `json:"category"`
-	Amount       string        `json:"amount"`
+	UserID        int32          `json:"user_id"`
+	AccountName   sql.NullString `json:"account_name"`
+	BankName      sql.NullString `json:"bank_name"`
+	AccountNumber sql.NullString `json:"account_number"`
+	InvestmentID  sql.NullInt32  `json:"investment_id"`
+	Type          string         `json:"type"`
+	Category      string         `json:"category"`
+	Amount        string         `json:"amount"`
+	PhoneNumber   sql.NullString `json:"phone_number"`
 }
 
 func (q *Queries) CreatePayoutRequest(ctx context.Context, arg CreatePayoutRequestParams) (PayoutRequest, error) {
@@ -34,17 +36,21 @@ func (q *Queries) CreatePayoutRequest(ctx context.Context, arg CreatePayoutReque
 		arg.UserID,
 		arg.AccountName,
 		arg.BankName,
+		arg.AccountNumber,
 		arg.InvestmentID,
 		arg.Type,
 		arg.Category,
 		arg.Amount,
+		arg.PhoneNumber,
 	)
 	var i PayoutRequest
 	err := row.Scan(
 		&i.ID,
 		&i.UserID,
 		&i.AccountName,
+		&i.PhoneNumber,
 		&i.BankName,
+		&i.AccountNumber,
 		&i.InvestmentID,
 		&i.Type,
 		&i.Category,
@@ -57,11 +63,11 @@ func (q *Queries) CreatePayoutRequest(ctx context.Context, arg CreatePayoutReque
 
 const createTransaction = `-- name: CreateTransaction :one
 INSERT INTO transactions (
-  user_id, amount, type, investment_id, status, reason
+  user_id, amount, type, investment_id, status, reason, category
 ) VALUES (
-  $1, $2, $3, $4, $5, $6
+  $1, $2, $3, $4, $5, $6, $7
 )
-RETURNING id, user_id, amount, investment_id, type, status, reason, created_at, updated_at
+RETURNING id, user_id, amount, investment_id, category, status, type, reason, created_at, updated_at
 `
 
 type CreateTransactionParams struct {
@@ -71,6 +77,7 @@ type CreateTransactionParams struct {
 	InvestmentID sql.NullInt32  `json:"investment_id"`
 	Status       string         `json:"status"`
 	Reason       sql.NullString `json:"reason"`
+	Category     string         `json:"category"`
 }
 
 func (q *Queries) CreateTransaction(ctx context.Context, arg CreateTransactionParams) (Transaction, error) {
@@ -81,6 +88,7 @@ func (q *Queries) CreateTransaction(ctx context.Context, arg CreateTransactionPa
 		arg.InvestmentID,
 		arg.Status,
 		arg.Reason,
+		arg.Category,
 	)
 	var i Transaction
 	err := row.Scan(
@@ -88,8 +96,9 @@ func (q *Queries) CreateTransaction(ctx context.Context, arg CreateTransactionPa
 		&i.UserID,
 		&i.Amount,
 		&i.InvestmentID,
-		&i.Type,
+		&i.Category,
 		&i.Status,
+		&i.Type,
 		&i.Reason,
 		&i.CreatedAt,
 		&i.UpdatedAt,
@@ -98,7 +107,7 @@ func (q *Queries) CreateTransaction(ctx context.Context, arg CreateTransactionPa
 }
 
 const getPayoutRequestByID = `-- name: GetPayoutRequestByID :one
-SELECT id, user_id, account_name, bank_name, investment_id, type, category, amount, created_at, updated_at FROM payout_requests
+SELECT id, user_id, account_name, phone_number, bank_name, account_number, investment_id, type, category, amount, created_at, updated_at FROM payout_requests
 WHERE id = $1
 `
 
@@ -109,7 +118,9 @@ func (q *Queries) GetPayoutRequestByID(ctx context.Context, id int32) (PayoutReq
 		&i.ID,
 		&i.UserID,
 		&i.AccountName,
+		&i.PhoneNumber,
 		&i.BankName,
+		&i.AccountNumber,
 		&i.InvestmentID,
 		&i.Type,
 		&i.Category,
@@ -121,7 +132,7 @@ func (q *Queries) GetPayoutRequestByID(ctx context.Context, id int32) (PayoutReq
 }
 
 const getRejectedTransactions = `-- name: GetRejectedTransactions :many
-SELECT id, user_id, amount, investment_id, type, status, reason, created_at, updated_at FROM transactions
+SELECT id, user_id, amount, investment_id, category, status, type, reason, created_at, updated_at FROM transactions
 WHERE status = 'rejected'
 `
 
@@ -139,8 +150,9 @@ func (q *Queries) GetRejectedTransactions(ctx context.Context) ([]Transaction, e
 			&i.UserID,
 			&i.Amount,
 			&i.InvestmentID,
-			&i.Type,
+			&i.Category,
 			&i.Status,
+			&i.Type,
 			&i.Reason,
 			&i.CreatedAt,
 			&i.UpdatedAt,
@@ -159,7 +171,7 @@ func (q *Queries) GetRejectedTransactions(ctx context.Context) ([]Transaction, e
 }
 
 const getTransactionByID = `-- name: GetTransactionByID :one
-SELECT id, user_id, amount, investment_id, type, status, reason, created_at, updated_at FROM transactions
+SELECT id, user_id, amount, investment_id, category, status, type, reason, created_at, updated_at FROM transactions
 WHERE id = $1
 `
 
@@ -171,8 +183,9 @@ func (q *Queries) GetTransactionByID(ctx context.Context, id int32) (Transaction
 		&i.UserID,
 		&i.Amount,
 		&i.InvestmentID,
-		&i.Type,
+		&i.Category,
 		&i.Status,
+		&i.Type,
 		&i.Reason,
 		&i.CreatedAt,
 		&i.UpdatedAt,
@@ -193,7 +206,7 @@ func (q *Queries) GetUserFromTransactionID(ctx context.Context, id int32) (int32
 }
 
 const listAllPayoutRequests = `-- name: ListAllPayoutRequests :many
-SELECT id, user_id, account_name, bank_name, investment_id, type, category, amount, created_at, updated_at FROM payout_requests
+SELECT id, user_id, account_name, phone_number, bank_name, account_number, investment_id, type, category, amount, created_at, updated_at FROM payout_requests
 `
 
 func (q *Queries) ListAllPayoutRequests(ctx context.Context) ([]PayoutRequest, error) {
@@ -209,7 +222,9 @@ func (q *Queries) ListAllPayoutRequests(ctx context.Context) ([]PayoutRequest, e
 			&i.ID,
 			&i.UserID,
 			&i.AccountName,
+			&i.PhoneNumber,
 			&i.BankName,
+			&i.AccountNumber,
 			&i.InvestmentID,
 			&i.Type,
 			&i.Category,
@@ -231,7 +246,7 @@ func (q *Queries) ListAllPayoutRequests(ctx context.Context) ([]PayoutRequest, e
 }
 
 const listPayoutRequestsByCategory = `-- name: ListPayoutRequestsByCategory :many
-SELECT id, user_id, account_name, bank_name, investment_id, type, category, amount, created_at, updated_at FROM payout_requests
+SELECT id, user_id, account_name, phone_number, bank_name, account_number, investment_id, type, category, amount, created_at, updated_at FROM payout_requests
 WHERE category = $1
 ORDER BY created_at DESC
 `
@@ -249,7 +264,9 @@ func (q *Queries) ListPayoutRequestsByCategory(ctx context.Context, category str
 			&i.ID,
 			&i.UserID,
 			&i.AccountName,
+			&i.PhoneNumber,
 			&i.BankName,
+			&i.AccountNumber,
 			&i.InvestmentID,
 			&i.Type,
 			&i.Category,
@@ -271,7 +288,7 @@ func (q *Queries) ListPayoutRequestsByCategory(ctx context.Context, category str
 }
 
 const listPayoutRequestsByType = `-- name: ListPayoutRequestsByType :many
-SELECT id, user_id, account_name, bank_name, investment_id, type, category, amount, created_at, updated_at FROM payout_requests
+SELECT id, user_id, account_name, phone_number, bank_name, account_number, investment_id, type, category, amount, created_at, updated_at FROM payout_requests
 WHERE type = $1
 ORDER BY created_at DESC
 `
@@ -289,7 +306,9 @@ func (q *Queries) ListPayoutRequestsByType(ctx context.Context, type_ string) ([
 			&i.ID,
 			&i.UserID,
 			&i.AccountName,
+			&i.PhoneNumber,
 			&i.BankName,
+			&i.AccountNumber,
 			&i.InvestmentID,
 			&i.Type,
 			&i.Category,
@@ -311,7 +330,7 @@ func (q *Queries) ListPayoutRequestsByType(ctx context.Context, type_ string) ([
 }
 
 const listPayoutRequestsByUserID = `-- name: ListPayoutRequestsByUserID :many
-SELECT id, user_id, account_name, bank_name, investment_id, type, category, amount, created_at, updated_at FROM payout_requests
+SELECT id, user_id, account_name, phone_number, bank_name, account_number, investment_id, type, category, amount, created_at, updated_at FROM payout_requests
 WHERE user_id = $1
 ORDER BY created_at DESC
 `
@@ -329,7 +348,9 @@ func (q *Queries) ListPayoutRequestsByUserID(ctx context.Context, userID int32) 
 			&i.ID,
 			&i.UserID,
 			&i.AccountName,
+			&i.PhoneNumber,
 			&i.BankName,
+			&i.AccountNumber,
 			&i.InvestmentID,
 			&i.Type,
 			&i.Category,
@@ -350,7 +371,7 @@ func (q *Queries) ListPayoutRequestsByUserID(ctx context.Context, userID int32) 
 	return items, nil
 }
 
-const listPendingTransactionsWithUser = `-- name: ListPendingTransactionsWithUser :many
+const listPendingDepositTransactionsWithUser = `-- name: ListPendingDepositTransactionsWithUser :many
 SELECT
   t.id,
   t.user_id,
@@ -365,10 +386,11 @@ SELECT
 FROM transactions t
 JOIN users u ON t.user_id = u.id
 WHERE t.status = 'pending'
+AND t.type = 'deposit'
 ORDER BY t.created_at DESC
 `
 
-type ListPendingTransactionsWithUserRow struct {
+type ListPendingDepositTransactionsWithUserRow struct {
 	ID        int32          `json:"id"`
 	UserID    int32          `json:"user_id"`
 	Amount    int32          `json:"amount"`
@@ -381,15 +403,15 @@ type ListPendingTransactionsWithUserRow struct {
 	Email     string         `json:"email"`
 }
 
-func (q *Queries) ListPendingTransactionsWithUser(ctx context.Context) ([]ListPendingTransactionsWithUserRow, error) {
-	rows, err := q.db.QueryContext(ctx, listPendingTransactionsWithUser)
+func (q *Queries) ListPendingDepositTransactionsWithUser(ctx context.Context) ([]ListPendingDepositTransactionsWithUserRow, error) {
+	rows, err := q.db.QueryContext(ctx, listPendingDepositTransactionsWithUser)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	items := []ListPendingTransactionsWithUserRow{}
+	items := []ListPendingDepositTransactionsWithUserRow{}
 	for rows.Next() {
-		var i ListPendingTransactionsWithUserRow
+		var i ListPendingDepositTransactionsWithUserRow
 		if err := rows.Scan(
 			&i.ID,
 			&i.UserID,
@@ -415,45 +437,113 @@ func (q *Queries) ListPendingTransactionsWithUser(ctx context.Context) ([]ListPe
 	return items, nil
 }
 
-const listTransactionsByType = `-- name: ListTransactionsByType :many
+const listPendingWithdrawalTransactionsWithUser = `-- name: ListPendingWithdrawalTransactionsWithUser :many
 SELECT
-  transactions.id, transactions.user_id, transactions.amount, transactions.investment_id, transactions.type, transactions.status, transactions.reason, transactions.created_at, transactions.updated_at,
+  t.id,
+  t.user_id,
+  t.amount,
+  t.type,
+  t.status,
+  t.reason,
+  t.created_at,
+  t.updated_at,
+  u.username,
+  u.email
+FROM transactions t
+JOIN users u ON t.user_id = u.id
+WHERE t.status = 'pending'
+AND t.type = 'withdrawal'
+ORDER BY t.created_at DESC
+`
+
+type ListPendingWithdrawalTransactionsWithUserRow struct {
+	ID        int32          `json:"id"`
+	UserID    int32          `json:"user_id"`
+	Amount    int32          `json:"amount"`
+	Type      string         `json:"type"`
+	Status    string         `json:"status"`
+	Reason    sql.NullString `json:"reason"`
+	CreatedAt sql.NullTime   `json:"created_at"`
+	UpdatedAt sql.NullTime   `json:"updated_at"`
+	Username  string         `json:"username"`
+	Email     string         `json:"email"`
+}
+
+func (q *Queries) ListPendingWithdrawalTransactionsWithUser(ctx context.Context) ([]ListPendingWithdrawalTransactionsWithUserRow, error) {
+	rows, err := q.db.QueryContext(ctx, listPendingWithdrawalTransactionsWithUser)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []ListPendingWithdrawalTransactionsWithUserRow{}
+	for rows.Next() {
+		var i ListPendingWithdrawalTransactionsWithUserRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.UserID,
+			&i.Amount,
+			&i.Type,
+			&i.Status,
+			&i.Reason,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+			&i.Username,
+			&i.Email,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listTransactionsByCategory = `-- name: ListTransactionsByCategory :many
+SELECT
+  transactions.id, transactions.user_id, transactions.amount, transactions.investment_id, transactions.category, transactions.status, transactions.type, transactions.reason, transactions.created_at, transactions.updated_at,
   users.username
 FROM transactions
 JOIN users ON users.id = transactions.user_id
-WHERE transactions.type = $1
+WHERE transactions.category = $1
 ORDER BY transactions.created_at DESC
 `
 
-type ListTransactionsByTypeRow struct {
+type ListTransactionsByCategoryRow struct {
 	ID           int32          `json:"id"`
 	UserID       int32          `json:"user_id"`
 	Amount       int32          `json:"amount"`
 	InvestmentID sql.NullInt32  `json:"investment_id"`
-	Type         string         `json:"type"`
+	Category     string         `json:"category"`
 	Status       string         `json:"status"`
+	Type         string         `json:"type"`
 	Reason       sql.NullString `json:"reason"`
 	CreatedAt    sql.NullTime   `json:"created_at"`
 	UpdatedAt    sql.NullTime   `json:"updated_at"`
 	Username     string         `json:"username"`
 }
 
-func (q *Queries) ListTransactionsByType(ctx context.Context, type_ string) ([]ListTransactionsByTypeRow, error) {
-	rows, err := q.db.QueryContext(ctx, listTransactionsByType, type_)
+func (q *Queries) ListTransactionsByCategory(ctx context.Context, category string) ([]ListTransactionsByCategoryRow, error) {
+	rows, err := q.db.QueryContext(ctx, listTransactionsByCategory, category)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	items := []ListTransactionsByTypeRow{}
+	items := []ListTransactionsByCategoryRow{}
 	for rows.Next() {
-		var i ListTransactionsByTypeRow
+		var i ListTransactionsByCategoryRow
 		if err := rows.Scan(
 			&i.ID,
 			&i.UserID,
 			&i.Amount,
 			&i.InvestmentID,
-			&i.Type,
+			&i.Category,
 			&i.Status,
+			&i.Type,
 			&i.Reason,
 			&i.CreatedAt,
 			&i.UpdatedAt,
@@ -473,7 +563,7 @@ func (q *Queries) ListTransactionsByType(ctx context.Context, type_ string) ([]L
 }
 
 const listTransactionsByUserID = `-- name: ListTransactionsByUserID :many
-SELECT id, user_id, amount, investment_id, type, status, reason, created_at, updated_at FROM transactions
+SELECT id, user_id, amount, investment_id, category, status, type, reason, created_at, updated_at FROM transactions
 WHERE user_id = $1
 ORDER BY created_at DESC
 `
@@ -492,8 +582,9 @@ func (q *Queries) ListTransactionsByUserID(ctx context.Context, userID int32) ([
 			&i.UserID,
 			&i.Amount,
 			&i.InvestmentID,
-			&i.Type,
+			&i.Category,
 			&i.Status,
+			&i.Type,
 			&i.Reason,
 			&i.CreatedAt,
 			&i.UpdatedAt,
@@ -512,7 +603,7 @@ func (q *Queries) ListTransactionsByUserID(ctx context.Context, userID int32) ([
 }
 
 const listUserInvestmentTransactions = `-- name: ListUserInvestmentTransactions :many
-SELECT id, user_id, amount, investment_id, type, status, reason, created_at, updated_at FROM transactions
+SELECT id, user_id, amount, investment_id, category, status, type, reason, created_at, updated_at FROM transactions
 WHERE user_id = $1
   AND type = 'investment'
 ORDER BY created_at DESC
@@ -532,8 +623,9 @@ func (q *Queries) ListUserInvestmentTransactions(ctx context.Context, userID int
 			&i.UserID,
 			&i.Amount,
 			&i.InvestmentID,
-			&i.Type,
+			&i.Category,
 			&i.Status,
+			&i.Type,
 			&i.Reason,
 			&i.CreatedAt,
 			&i.UpdatedAt,
@@ -552,9 +644,9 @@ func (q *Queries) ListUserInvestmentTransactions(ctx context.Context, userID int
 }
 
 const listUserSavingsTransactions = `-- name: ListUserSavingsTransactions :many
-SELECT id, user_id, amount, investment_id, type, status, reason, created_at, updated_at FROM transactions
+SELECT id, user_id, amount, investment_id, category, status, type, reason, created_at, updated_at FROM transactions
 WHERE user_id = $1
-  AND type = 'savings'
+  AND category = 'savings'
 ORDER BY created_at DESC
 `
 
@@ -572,8 +664,9 @@ func (q *Queries) ListUserSavingsTransactions(ctx context.Context, userID int32)
 			&i.UserID,
 			&i.Amount,
 			&i.InvestmentID,
-			&i.Type,
+			&i.Category,
 			&i.Status,
+			&i.Type,
 			&i.Reason,
 			&i.CreatedAt,
 			&i.UpdatedAt,

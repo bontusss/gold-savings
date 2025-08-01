@@ -233,4 +233,34 @@ func (a *Service) VerifyEmailCode(ctx context.Context, email, code string) (bool
 	return true, nil
 }
 
-// ...existing code...
+func (a *Service) GetUserFromRefCode(ctx context.Context, code string) (*db.User, error) {
+	user, err := a.queries.GetUserByReferenceID(ctx, code)
+	if err != nil {
+		return nil, fmt.Errorf("error getting user from ref code")
+	}
+	return &user, nil
+}
+
+func (a *Service) CreateReferral(ctx context.Context, inviterID, inviteeID int32) (*db.Referral, error) {
+	args := db.CreateReferralParams{
+		InviterID: inviterID,
+		InviteeID: inviteeID,
+	}
+	ref, err := a.queries.CreateReferral(ctx, args)
+	if err != nil {
+		return nil, fmt.Errorf("error creating referral")
+	}
+
+	u, _ := a.queries.GetUser(ctx, inviterID)
+
+	// Update user tokens
+	tokenParams := db.UpdateUserTokensParams{
+		ID:          inviterID,
+		TotalTokens: u.TotalTokens + int32(a.config.TOKENPERREFERRAL),
+	}
+	if err = a.queries.UpdateUserTokens(ctx, tokenParams); err != nil {
+		return nil, errors.New("failed to update user token: " + err.Error())
+	}
+
+	return &ref, nil
+}

@@ -62,12 +62,13 @@ func (h *DashboardHandler) ShowDashboard(c *gin.Context) {
 	}
 	requests, _ := h.queries.ListAllPayoutRequests(c)
 	topUsers, _ := h.queries.ListUsersByTotalSavingsDesc(c)
-	trans, _ := h.queries.ListPendingTransactionsWithUser(c)
+	trans, _ := h.queries.ListPendingDepositTransactionsWithUser(c)
 	plans, _ := h.queries.GetAllInvestmentPlans(c)
 	i, _ := h.queries.ListInvestmentsWithUserAndPlan(c)
-	savings, _ := h.queries.ListTransactionsByType(c, "savings")
-
-	err = components.DashboardT(activeUsersCount, ts, ia, tt, topUsers, plans, requests, trans, i, savings).Render(c, c.Writer)
+	deposits, _ := h.queries.ListTransactionsByCategory(c, "savings")
+	wdw, _ := h.queries.ListPendingWithdrawalTransactionsWithUser(c)
+		
+	err = components.DashboardT(activeUsersCount, ts, ia, tt, topUsers, plans, requests, trans, i, deposits, wdw).Render(c, c.Writer)
 	if err != nil {
 		c.String(http.StatusInternalServerError, "Error rendering dashboard page")
 		return
@@ -135,13 +136,42 @@ func (h *DashboardHandler) ApprovePayment(c *gin.Context) {
 		return
 	}
 
-	// Approve directly, no JSON body needed
-	err = h.admin.ApprovePayment(c, int32(transID), "approved", "Approved by admin via email link")
+	transaction, err := h.queries.GetTransactionByID(c, int32(transID))
 	if err != nil {
-		log.Printf("error updating transaction status: %v", err)
+		log.Printf("error getting transaction: %v", err)
+		c.JSON(400, serverError)
+		return
+	}
+
+	switch transaction.Category {
+	case "savings":
+		err = h.admin.ApprovePayment(c, int32(transID), "approved", "Approved by admin via email link")
+		if err != nil {
+			log.Printf("error updating transaction status: %v", err)
+			c.JSON(500, serverError)
+			return
+		}
+	case "investment":
+		err = h.admin.ApproveInvestment(c, int32(transID), "approved", "Approved by admin")
+		if err != nil {
+			log.Printf("error updating transaction status: %v", err)
+			c.JSON(500, serverError)
+			return
+		}
+	case "token":
+		err = h.admin.ApproveTokenRequest(c, int32(transID), "approved", "Approved by admin")
+		if err != nil {
+			log.Printf("error updating transaction status: %v", err)
+			c.JSON(500, serverError)
+			return
+		}
+	default:
+		log.Println("Invalid transaction category")
 		c.JSON(500, serverError)
 		return
 	}
+
+	// Approve directly, no JSON body needed
 
 	c.JSON(200, "transaction status updated")
 }
@@ -155,79 +185,80 @@ func (h *DashboardHandler) DeclinePayment(c *gin.Context) {
 		return
 	}
 
-	// Approve directly, no JSON body needed
-	err = h.admin.DeclinePayment(c, int32(transID), "declined", "Declined by admin via email link")
+	transaction, err := h.queries.GetTransactionByID(c, int32(transID))
 	if err != nil {
-		log.Printf("error updating transaction status: %v", err)
-		c.JSON(500, serverError)
+		log.Printf("error getting transaction: %v", err)
+		c.JSON(400, serverError)
 		return
+	}
+
+	switch transaction.Category {
+	case "savings":
+		err = h.admin.DeclinePayment(c, int32(transID), "declined", "Declined by admin via email link")
+		if err != nil {
+			log.Printf("error updating transaction status: %v", err)
+			c.JSON(500, serverError)
+			return
+		}
+	case "investment":
+		err = h.admin.DeclineInvestment(c, int32(transID), "declined", "Declined by admin via email link")
+		if err != nil {
+			log.Printf("error updating transaction status: %v", err)
+			c.JSON(500, serverError)
+			return
+		}
 	}
 
 	c.JSON(200, "transaction status updated")
 }
 
-func (h *DashboardHandler) ApproveInvestment(c *gin.Context) {
+func (h *DashboardHandler) ApproveWithdrawal(c *gin.Context) {
 	transactionIDStr := c.Param("id")
 	transID, err := strconv.Atoi(transactionIDStr)
 	if err != nil {
 		log.Printf("invalid transaction ID: %v", err)
-		if isHTMX(c) {
-			c.String(400, "Invalid transaction ID")
-		} else {
-			c.JSON(400, gin.H{"error": "Invalid transaction ID"})
-		}
+		c.JSON(400, "invalid transaction ID")
 		return
 	}
 
-	err = h.admin.ApproveInvestment(c, int32(transID), "approved", "Approved by admin via email link")
+	transaction, err := h.queries.GetTransactionByID(c, int32(transID))
 	if err != nil {
-		log.Printf("error updating transaction status: %v", err)
-		if isHTMX(c) {
-			c.String(500, "Server error")
-		} else {
-			c.JSON(500, gin.H{"error": serverError})
-		}
+		log.Printf("error getting transaction: %v", err)
+		c.JSON(400, serverError)
 		return
 	}
 
-	if isHTMX(c) {
-		// Render partial or return a success message
-		c.String(200, "✅ Approved") // or render a partial HTML block
-	} else {
-		c.JSON(200, gin.H{"message": "Transaction status updated"})
-	}
-}
-
-func (h *DashboardHandler) DeclineInvestment(c *gin.Context) {
-	transactionIDStr := c.Param("id")
-	transID, err := strconv.Atoi(transactionIDStr)
-	if err != nil {
-		log.Printf("invalid transaction ID: %v", err)
-		if isHTMX(c) {
-			c.String(400, "Invalid transaction ID")
-		} else {
-			c.JSON(400, gin.H{"error": "Invalid transaction ID"})
+	switch transaction.Category {
+	case "savings":
+		err = h.admin.ApproveWithdrawal(c, int32(transID), "approved", "Approved by admin via email link")
+		if err != nil {
+			log.Printf("error updating transaction status: %v", err)
+			c.JSON(500, serverError)
+			return
 		}
+	case "investment":
+		err = h.admin.ApproveInvestmentWithdraw(c, int32(transID), "approved", "Approved by admin")
+		if err != nil {
+			log.Printf("error updating transaction status: %v", err)
+			c.JSON(500, serverError)
+			return
+		}
+	case "token":
+		err = h.admin.ApproveTokenRequest(c, int32(transID), "approved", "Approved by admin")
+		if err != nil {
+			log.Printf("error updating transaction status: %v", err)
+			c.JSON(500, serverError)
+			return
+		}
+	default:
+		log.Println("Invalid transaction category")
+		c.JSON(500, serverError)
 		return
 	}
 
-	err = h.admin.DeclineInvestment(c, int32(transID), "declined", "Declined by admin via email link")
-	if err != nil {
-		log.Printf("error updating transaction status: %v", err)
-		if isHTMX(c) {
-			c.String(500, "Server error")
-		} else {
-			c.JSON(500, gin.H{"error": serverError})
-		}
-		return
-	}
+	// Approve directly, no JSON body needed
 
-	if isHTMX(c) {
-		// Render partial or return a success message
-		c.String(200, "✅ Approved") // or render a partial HTML block
-	} else {
-		c.JSON(200, gin.H{"message": "Transaction status updated"})
-	}
+	c.JSON(200, "transaction status updated")
 }
 
 func isHTMX(c *gin.Context) bool {

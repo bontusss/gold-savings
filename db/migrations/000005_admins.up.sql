@@ -12,6 +12,7 @@ CREATE TABLE
     id SERIAL PRIMARY KEY,
     name TEXT NOT NULL UNIQUE,
     interest_rate NUMERIC(5, 2) NOT NULL, -- e.g. 12.50 (%)
+    description TEXT NOT NULL,
     min_amount NUMERIC(12, 2) NOT NULL CHECK (min_amount >= 0),
     max_amount NUMERIC(12, 2) NOT NULL CHECK (max_amount > min_amount),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,

@@ -36,6 +36,7 @@ type InvestmentPlan struct {
 	ID           int32        `json:"id"`
 	Name         string       `json:"name"`
 	InterestRate string       `json:"interest_rate"`
+	Description  string       `json:"description"`
 	MinAmount    string       `json:"min_amount"`
 	MaxAmount    string       `json:"max_amount"`
 	CreatedAt    sql.NullTime `json:"created_at"`
@@ -43,16 +44,25 @@ type InvestmentPlan struct {
 }
 
 type PayoutRequest struct {
-	ID           int32         `json:"id"`
-	UserID       int32         `json:"user_id"`
-	AccountName  string        `json:"account_name"`
-	BankName     string        `json:"bank_name"`
-	InvestmentID sql.NullInt32 `json:"investment_id"`
-	Type         string        `json:"type"`
-	Category     string        `json:"category"`
-	Amount       string        `json:"amount"`
-	CreatedAt    sql.NullTime  `json:"created_at"`
-	UpdatedAt    sql.NullTime  `json:"updated_at"`
+	ID            int32          `json:"id"`
+	UserID        int32          `json:"user_id"`
+	AccountName   sql.NullString `json:"account_name"`
+	PhoneNumber   sql.NullString `json:"phone_number"`
+	BankName      sql.NullString `json:"bank_name"`
+	AccountNumber sql.NullString `json:"account_number"`
+	InvestmentID  sql.NullInt32  `json:"investment_id"`
+	Type          string         `json:"type"`
+	Category      string         `json:"category"`
+	Amount        string         `json:"amount"`
+	CreatedAt     sql.NullTime   `json:"created_at"`
+	UpdatedAt     sql.NullTime   `json:"updated_at"`
+}
+
+type Referral struct {
+	ID        int32        `json:"id"`
+	InviterID int32        `json:"inviter_id"`
+	InviteeID int32        `json:"invitee_id"`
+	CreatedAt sql.NullTime `json:"created_at"`
 }
 
 type Saving struct {
@@ -68,8 +78,9 @@ type Transaction struct {
 	UserID       int32          `json:"user_id"`
 	Amount       int32          `json:"amount"`
 	InvestmentID sql.NullInt32  `json:"investment_id"`
-	Type         string         `json:"type"`
+	Category     string         `json:"category"`
 	Status       string         `json:"status"`
+	Type         string         `json:"type"`
 	Reason       sql.NullString `json:"reason"`
 	CreatedAt    sql.NullTime   `json:"created_at"`
 	UpdatedAt    sql.NullTime   `json:"updated_at"`
@@ -89,7 +100,6 @@ type User struct {
 	PasswordHash             string         `json:"password_hash"`
 	AccountNumber            sql.NullString `json:"account_number"`
 	BankName                 sql.NullString `json:"bank_name"`
-	TokenBalance             sql.NullInt32  `json:"token_balance"`
 	IsActive                 sql.NullBool   `json:"is_active"`
 	EmailVerified            bool           `json:"email_verified"`
 	VerificationCode         sql.NullString `json:"verification_code"`

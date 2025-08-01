@@ -33,7 +33,7 @@ func ListUsers(title string, users []db.User) templ.Component {
 			templ_7745c5c3_Var1 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<!-- Start::row-3 --><div class=\"grid grid-cols-12 gap-x-6\"><div class=\"col-span-12\"><div class=\"box orders-table\"><div class=\"box-header\"><div class=\"sm:flex justify-between sm:space-y-0 space-y-2\"><h5 class=\"box-title my-auto\">Users</h5><div class=\"hs-dropdown ti-dropdown block ltr:ml-auto rtl:mr-auto my-auto\"><button id=\"hs-dropdown-custom-icon-trigger\" type=\"button\" class=\"hs-dropdown-toggle px-2 py-1 ti-btn ti-btn-primary\">Sort By<i class=\"ri-arrow-down-s-line align-middle\"></i></button><div class=\"hs-dropdown-menu ti-dropdown-menu\" aria-labelledby=\"hs-dropdown-custom-icon-trigger\"><a class=\"ti-dropdown-item\" href=\"javascript:void(0)\">New</a> <a class=\"ti-dropdown-item\" href=\"javascript:void(0)\">popular</a> <a class=\"ti-dropdown-item\" href=\"javascript:void(0)\">Relevant</a></div></div></div></div><div class=\"box-body\"><div class=\"table-bordered rounded-sm overflow-auto\"><table class=\"ti-custom-table ti-custom-table-head\"><thead class=\"\"><tr><th scope=\"col\">Username</th><th scope=\"col\">Status</th><th scope=\"col\">Email</th><th scope=\"col\">Phone</th><th scope=\"col\">Date</th><th scope=\"col\">Action</th></tr></thead> <tbody>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<!-- Start::row-3 --><div class=\"grid grid-cols-12 gap-x-6\"><div class=\"col-span-12\"><div class=\"box orders-table\"><div class=\"box-header\"><div class=\"sm:flex justify-between sm:space-y-0 space-y-2\"><h5 class=\"box-title my-auto\">Users</h5></div></div><div class=\"box-body\"><div class=\"table-bordered rounded-sm overflow-auto\"><table class=\"ti-custom-table ti-custom-table-head\"><thead class=\"\"><tr><th scope=\"col\">Username</th><th scope=\"col\">Status</th><th scope=\"col\">Email</th><th scope=\"col\">Phone</th><th scope=\"col\">Savings</th><th scope=\"col\">Investments</th><th scope=\"col\">Tokens</th><th scope=\"col\">Date</th><th scope=\"col\">Action</th></tr></thead> <tbody>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -51,7 +51,7 @@ func ListUsers(title string, users []db.User) templ.Component {
 				var templ_7745c5c3_Var2 string
 				templ_7745c5c3_Var2, templ_7745c5c3_Err = templ.JoinStringErrs(user.Username)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `admin/components/user_list.templ`, Line: 50, Col: 66}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `admin/components/user_list.templ`, Line: 43, Col: 66}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var2))
 				if templ_7745c5c3_Err != nil {
@@ -64,7 +64,7 @@ func ListUsers(title string, users []db.User) templ.Component {
 				var templ_7745c5c3_Var3 string
 				templ_7745c5c3_Var3, templ_7745c5c3_Err = templ.JoinStringErrs(user.Email)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `admin/components/user_list.templ`, Line: 55, Col: 63}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `admin/components/user_list.templ`, Line: 48, Col: 63}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var3))
 				if templ_7745c5c3_Err != nil {
@@ -77,32 +77,71 @@ func ListUsers(title string, users []db.User) templ.Component {
 				var templ_7745c5c3_Var4 string
 				templ_7745c5c3_Var4, templ_7745c5c3_Err = templ.JoinStringErrs(user.Phone)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `admin/components/user_list.templ`, Line: 56, Col: 63}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `admin/components/user_list.templ`, Line: 49, Col: 63}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var4))
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 6, "</td><td><div class=\"inline-flex items-center\"><i class=\"ri-map-pin-fill text-gray-500 dark:text-white/70 text-xs\"></i> <span class=\"ltr:ml-1 rtl:mr-1\">")
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 6, "</td><td>")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
 				var templ_7745c5c3_Var5 string
-				templ_7745c5c3_Var5, templ_7745c5c3_Err = templ.JoinStringErrs(formatTime(user.CreatedAt.Time))
+				templ_7745c5c3_Var5, templ_7745c5c3_Err = templ.JoinStringErrs(formatCurrency(int(user.TotalSavings)))
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `admin/components/user_list.templ`, Line: 61, Col: 120}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `admin/components/user_list.templ`, Line: 50, Col: 91}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var5))
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 7, "</span></div></td><td><div class=\"flex items-center flex-row self-stretch gap-2 text-base\"><a aria-label=\"anchor\" href=\"javascript:void(0);\" class=\"ti-btn ti-btn-soft-success py-1 px-2\"><i class=\"ri-download-2-line\"></i></a> <a aria-label=\"anchor\" href=\"javascript:void(0);\" class=\"ti-btn ti-btn-soft-primary py-1 px-2\"><i class=\"ri-edit-line\"></i></a></div></td></tr>")
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 7, "</td><td>")
+				if templ_7745c5c3_Err != nil {
+					return templ_7745c5c3_Err
+				}
+				var templ_7745c5c3_Var6 string
+				templ_7745c5c3_Var6, templ_7745c5c3_Err = templ.JoinStringErrs(formatCurrency(int(user.TotalInvestmentAmount)))
+				if templ_7745c5c3_Err != nil {
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `admin/components/user_list.templ`, Line: 51, Col: 100}
+				}
+				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var6))
+				if templ_7745c5c3_Err != nil {
+					return templ_7745c5c3_Err
+				}
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 8, "</td><td>")
+				if templ_7745c5c3_Err != nil {
+					return templ_7745c5c3_Err
+				}
+				var templ_7745c5c3_Var7 string
+				templ_7745c5c3_Var7, templ_7745c5c3_Err = templ.JoinStringErrs(formatCurrency(int(user.TotalTokens)))
+				if templ_7745c5c3_Err != nil {
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `admin/components/user_list.templ`, Line: 52, Col: 90}
+				}
+				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var7))
+				if templ_7745c5c3_Err != nil {
+					return templ_7745c5c3_Err
+				}
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 9, "</td><td><div class=\"inline-flex items-center\"><i class=\"ri-map-pin-fill text-gray-500 dark:text-white/70 text-xs\"></i> <span class=\"ltr:ml-1 rtl:mr-1\">")
+				if templ_7745c5c3_Err != nil {
+					return templ_7745c5c3_Err
+				}
+				var templ_7745c5c3_Var8 string
+				templ_7745c5c3_Var8, templ_7745c5c3_Err = templ.JoinStringErrs(formatTime(user.CreatedAt.Time))
+				if templ_7745c5c3_Err != nil {
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `admin/components/user_list.templ`, Line: 57, Col: 120}
+				}
+				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var8))
+				if templ_7745c5c3_Err != nil {
+					return templ_7745c5c3_Err
+				}
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 10, "</span></div></td><td><div class=\"flex items-center flex-row self-stretch gap-2 text-base\"><a aria-label=\"anchor\" href=\"javascript:void(0);\" class=\"ti-btn ti-btn-soft-success py-1 px-2\"><i class=\"ri-download-2-line\"></i></a> <a aria-label=\"anchor\" href=\"javascript:void(0);\" class=\"ti-btn ti-btn-soft-primary py-1 px-2\"><i class=\"ri-edit-line\"></i></a></div></td></tr>")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
 			}
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 8, "</tbody></table></div></div><div class=\"box-footer\"><div class=\"sm:flex sm:space-y-0 space-y-2 items-center\"><div class=\"\">showing 5 Entries <i class=\"ri-arrow-right-line ml-2 font-semibold\"></i></div><div class=\"ltr:ml-auto rtl:mr-auto\"><nav class=\"flex justify-center items-center space-x-2 rtl:space-x-reverse\"><a class=\"text-gray-500 hover:text-primary e py-1 px-2 leading-none inline-flex items-center gap-2 rounded-sm\" href=\"javascript:void(0);\"><span aria-hidden=\"true\">Prev</span> <span class=\"sr-only\">Previous</span></a> <a class=\"bg-primary text-white py-1 px-2 leading-none inline-flex items-center text-sm font-medium rounded-sm\" href=\"javascript:void(0);\" aria-current=\"page\">1</a> <a class=\"text-gray-500 hover:text-primary e py-1 px-2 leading-none inline-flex items-center text-sm font-medium rounded-sm\" href=\"javascript:void(0);\">2</a> <a class=\"text-gray-500 hover:text-primary e py-1 px-2 leading-none inline-flex items-center text-sm font-medium rounded-sm\" href=\"javascript:void(0);\">3</a> <a class=\"text-gray-500 hover:text-primary e py-1 px-2 leading-none inline-flex items-center gap-2 rounded-sm\" href=\"javascript:void(0);\"><span class=\"sr-only\">Next</span> <span aria-hidden=\"true\">Next</span></a></nav></div></div></div></div></div></div><!-- End::row-3 -->")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 11, "</tbody></table></div></div></div></div></div><!-- End::row-3 -->")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

@@ -8,6 +8,10 @@ RETURNING *;
 SELECT * FROM users
 WHERE email = $1 LIMIT 1;
 
+-- name: GetUserByReferenceID :one
+SELECT * FROM users
+WHERE reference_id = $1 LIMIT 1;
+
 -- name: ListUsers :many
 SELECT * FROM users ORDER BY created_at DESC;
 
@@ -59,6 +63,14 @@ SET email = $2,
     updated_at = NOW()
 WHERE id = $1;
 
+-- name: UpdateUsernameEmailPartial :exec
+UPDATE users
+SET
+  email = COALESCE(sqlc.narg('email'), email),
+  username = COALESCE(sqlc.narg('username'), username)
+WHERE id = sqlc.arg('id');
+
+
 -- name: UpdateUserTotalSavings :exec
 UPDATE users
 SET total_savings = $2,
@@ -70,9 +82,19 @@ SELECT total_savings
 FROM users
 WHERE id = $1;
 
+-- name: GetUserTotalTokeens :one
+SELECT total_tokens
+FROM users
+WHERE id = $1;
+
 -- name: GetUserTokens :one
 SELECT total_tokens
 FROM users
+WHERE id = $1;
+
+-- name: UpdateUserTokens :exec
+UPDATE users
+SET total_tokens = $2
 WHERE id = $1;
 
 -- name: GetUserInvestmentBalance :one
@@ -101,3 +123,15 @@ FROM users
 WHERE total_savings > 0
 ORDER BY total_savings DESC
 LIMIT 10;
+
+-- name: CreateReferral :one
+INSERT INTO referrals (inviter_id, invitee_id)
+VALUES ($1, $2)
+RETURNING id, inviter_id, invitee_id, created_at;
+
+-- name: ListReferralsByInviter :many
+SELECT r.id, r.inviter_id, r.invitee_id, r.created_at, u.email, u.username
+FROM referrals r
+JOIN users u ON u.id = r.invitee_id
+WHERE r.inviter_id = $1
+ORDER BY r.created_at DESC;

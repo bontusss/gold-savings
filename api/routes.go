@@ -31,8 +31,11 @@ func SetupRoutes(router *gin.RouterGroup, authService *auth.Service, queries *db
 	protected.Use(middleware.JWTAuthMiddleware(authService))
 	{
 		protected.GET("/plans", userHandler.GetAllInvestmentPlans)
+		protected.POST("/redeem-tokens", userHandler.CreateTokenRedeemRequest)
 		protected.POST("/savings/payment_request", userHandler.CreateSavingsPaymentRequest)
+		protected.POST("/savings/withdraw_request", userHandler.CreateSavingsWithdrawRequest)
 		protected.POST("/investment/payment_request", userHandler.CreateInvestmentPaymentRequest)
+		protected.POST("/investment/withdraw_request", userHandler.CreateInvestmentWithhdrawRequest)
 		protected.GET("/transactions/savings", userHandler.ListUserSavingsTransactions)
 		protected.GET("/transactions/investment", userHandler.ListUserInvestmentTransactions)
 		protected.POST("/investment", userHandler.CreateInvestment)
@@ -41,5 +44,7 @@ func SetupRoutes(router *gin.RouterGroup, authService *auth.Service, queries *db
 		protected.GET("/user/savings_balance", userHandler.GetUserSavingsBalance)
 		protected.GET("/user/investment_balance", userHandler.GetUserInvestmentBalance)
 		protected.POST("/user/update", userHandler.UpdateEmailAndUsername)
+		protected.GET("/user/refs", userHandler.ListUserRefs)
+		protected.GET("/user/token", userHandler.GetUserTokens)
 	}
 }

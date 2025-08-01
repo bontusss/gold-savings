@@ -53,9 +53,12 @@ CREATE TABLE
     user_id INTEGER NOT NULL REFERENCES users (id) ON DELETE CASCADE,
     amount INTEGER NOT NULL CHECK (amount > 0),
     investment_id INTEGER REFERENCES investments (id) ON DELETE SET NULL,
-    type TEXT NOT NULL CHECK (type IN ('savings', 'investment')),
+    category TEXT NOT NULL CHECK (category IN ('savings', 'investment', 'token')),
     status TEXT NOT NULL CHECK (
-      status IN ('deposit', 'withdrawal', 'pending', 'declined')
+      status IN ('pending', 'declined', 'approved')
+    ),
+    type TEXT NOT NULL CHECK (
+      type IN ('deposit', 'withdrawal', 'token')
     ),
     reason TEXT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -66,11 +69,13 @@ CREATE TABLE
   payout_requests (
     id SERIAL PRIMARY KEY,
     user_id INTEGER NOT NULL REFERENCES users (id) ON DELETE CASCADE,
-    account_name TEXT NOT NULL,
-    bank_name TEXT NOT NULL,
+    account_name TEXT,
+    phone_number TEXT,
+    bank_name TEXT,
+    account_number TEXT,
     investment_id INTEGER REFERENCES investments (id) ON DELETE SET NULL,
-    type TEXT NOT NULL CHECK (type IN ('savings', 'investment')),
-    category TEXT NOT NULL CHECK (category IN ('deposit', 'withdrawal')),
+    type TEXT NOT NULL CHECK (type IN ('savings', 'investment', 'token')),
+    category TEXT NOT NULL CHECK (category IN ('deposit', 'withdrawal', 'token')),
     amount NUMERIC(12, 2) NOT NULL CHECK (amount > 0),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP

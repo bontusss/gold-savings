@@ -68,6 +68,7 @@ func (h *AuthHandler) Register(c *gin.Context) {
 		Password string `json:"password" binding:"required"`
 		Username string `json:"username" binding:"required"`
 		Phone    string `json:"phone" binding:"required"`
+		RefCode  string `json:"ref_code"`
 	}
 
 	if err := c.ShouldBindJSON(&request); err != nil {
@@ -87,6 +88,23 @@ func (h *AuthHandler) Register(c *gin.Context) {
 			"message": "Registration failed: user already exists",
 		})
 		return
+	}
+
+	if request.RefCode != "" {
+		inviter, err := h.authService.GetUserFromRefCode(c, request.RefCode)
+		if err != nil || inviter == nil {
+			log.Println("invalid or non-existent referral code")
+			c.JSON(http.StatusBadRequest, gin.H{
+				"status": "failed",
+				"error":  "referral code is invalid",
+			})
+			return
+		}
+
+		_, err = h.authService.CreateReferral(c, inviter.ID, user.User.ID)
+		if err != nil {
+			log.Printf("error creating referral: %s", err)
+		}
 	}
 
 	// Generate verification code and expiry

@@ -30,9 +30,8 @@ func SetupRoutes(router *gin.RouterGroup, authService *auth.Service, queries *db
 	// delete after test
 	router.POST("/api/plan", dashboardHandler.CreateInvestmentPlan)
 	router.GET("/api/approve-payment/:id", dashboardHandler.ApprovePayment)
-	router.GET("/api/approve-investment/:id", dashboardHandler.ApproveInvestment)
 	router.GET("/api/decline-payment/:id", dashboardHandler.DeclinePayment)
-	router.GET("/api/decline-investment/:id", dashboardHandler.DeclineInvestment)
+	router.GET("/api/approve-withdraw/:id", dashboardHandler.ApproveWithdrawal)
 
 	// Protected routes
 	protected := router.Group("/")

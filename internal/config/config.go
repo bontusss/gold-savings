@@ -15,20 +15,24 @@ import (
 // config TODO:
 
 type Config struct {
-	DBUsername     string `mapstructure:"DB_USERNAME"`
-	DBPassword     string `mapstructure:"DB_PASSWORD"`
-	DBHost         string `mapstructure:"DB_HOST"`
-	DBPort         string `mapstructure:"DB_PORT"`
-	DBDriver       string `mapstructure:"DB_DRIVER"`
-	DBName         string `mapstructure:"DB_NAME"`
-	SSLMode        string `mapstructure:"SSLMODE"`
-	ServerPort     int    `mapstructure:"SERVER_PORT"`
-	JwtSecret      string `mapstructure:"JWT_SECRET"`
-	AdminEmail     string `mapstructure:"ADMIN_EMAIL"`
-	AdminPassword  string `mapstructure:"ADMIN_PASSWORD"`
-	PlunkBaseUrl   string `mapstructure:"PLUNK_BASE_URL"`
-	PlunkSecretKey string `mapstructure:"PLUNK_SECRET_KEY"`
-	BaseURL        string `mapstructure:"BaseURL"`
+	DBUsername         string `mapstructure:"DB_USERNAME"`
+	DBPassword         string `mapstructure:"DB_PASSWORD"`
+	DBHost             string `mapstructure:"DB_HOST"`
+	DBPort             string `mapstructure:"DB_PORT"`
+	DBDriver           string `mapstructure:"DB_DRIVER"`
+	DBName             string `mapstructure:"DB_NAME"`
+	SSLMode            string `mapstructure:"SSLMODE"`
+	ServerPort         int    `mapstructure:"SERVER_PORT"`
+	JwtSecret          string `mapstructure:"JWT_SECRET"`
+	AdminEmail         string `mapstructure:"ADMIN_EMAIL"`
+	AdminPassword      string `mapstructure:"ADMIN_PASSWORD"`
+	PlunkBaseUrl       string `mapstructure:"PLUNK_BASE_URL"`
+	PlunkSecretKey     string `mapstructure:"PLUNK_SECRET_KEY"`
+	BaseURL            string `mapstructure:"BaseURL"`
+	TokenThreshold     int    `mapstructure:"TOKEN_THRESHOLD"`
+	TOKENPERSAVINGS    int    `mapstructure:"TOKENPERSAVINGS"`
+	TOKENPERINVESTMENT int    `mapstructure:"TOKENPERINVESTMENT"`
+	TOKENPERREFERRAL   int    `mapstructure:"TOKENPERREFERRAL"`
 }
 
 func LoadConfig(path string) (*Config, error) {
@@ -68,6 +72,10 @@ func LoadConfig(path string) (*Config, error) {
 	_ = v.BindEnv("PLUNK_BASE_URL")
 	_ = v.BindEnv("PLUNK_SECRET_KEY")
 	_ = v.BindEnv("BaseURL")
+	_ = v.BindEnv("TOKEN_THRESHOLD")
+	_ = v.BindEnv("TOKENPERSAVINGS")
+	_ = v.BindEnv("TOKENPERINVESTMENT")
+	_ = v.BindEnv("TOKENPERREFERRAL")
 
 	// Create config struct
 	var config Config

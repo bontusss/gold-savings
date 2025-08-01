@@ -31,10 +31,15 @@ func (s *userHandler) GetAllInvestmentPlans(c *gin.Context) {
 
 func (s *userHandler) CreateSavingsPaymentRequest(c *gin.Context) {
 	var req struct {
-		Amount        string `json:"amount" binding:"required"`
-		BankName      string `json:"bank_name" binding:"required"`
-		AccountName   string `json:"account_name" binding:"required"`
-		AccountNumber string `json:"account_number" binding:"required"`
+		Amount      string `json:"amount" binding:"required"`
+		BankName    string `json:"bank_name" binding:"required"`
+		AccountName string `json:"account_name" binding:"required"`
+	}
+
+	if err := c.ShouldBindJSON(&req); err != nil {
+		log.Printf("error binding JSON: %v", err)
+		c.JSON(400, gin.H{"error": "invalid request"})
+		return
 	}
 
 	userID, err := utils.GetActiveUserID(c)
@@ -44,11 +49,6 @@ func (s *userHandler) CreateSavingsPaymentRequest(c *gin.Context) {
 		return
 	}
 
-	if err := c.ShouldBindJSON(&req); err != nil {
-		log.Printf("error binding JSON: %v", err)
-		c.JSON(400, gin.H{"error": "invalid request"})
-		return
-	}
 	amountDecimal, err := decimal.NewFromString(req.Amount)
 	if err != nil {
 		log.Printf("error converting amount to decimal: %v", err)
@@ -56,7 +56,7 @@ func (s *userHandler) CreateSavingsPaymentRequest(c *gin.Context) {
 		return
 	}
 
-	payment, err := s.userService.CreateSavingsPaymentRequest(c, userID, amountDecimal, req.BankName, req.AccountName, req.AccountNumber)
+	payment, err := s.userService.CreateSavingsPaymentRequest(c, userID, amountDecimal, req.BankName, req.AccountName)
 	if err != nil {
 		log.Printf("error creating payment request: %v", err)
 		c.JSON(500, serverError)
@@ -64,7 +64,97 @@ func (s *userHandler) CreateSavingsPaymentRequest(c *gin.Context) {
 	}
 	investmentID := sql.NullInt32{Valid: false}
 
-	transaction, err := s.userService.CreateTransaction(c, userID, investmentID, amountDecimal, payment.Type)
+	transaction, err := s.userService.CreateTransaction(c, userID, investmentID, amountDecimal, payment.Category, payment.Type)
+	if err != nil {
+		log.Printf("error creating transaction: %v", err)
+		c.JSON(500, serverError)
+		return
+	}
+
+	c.JSON(201, transaction)
+}
+
+func (s *userHandler) CreateTokenRedeemRequest(c *gin.Context) {
+	var req struct {
+		Amount      string `json:"amount" binding:"required"`
+		PhoneNumber string `json:"phone" binding:"required"`
+	}
+
+	if err := c.ShouldBindJSON(&req); err != nil {
+		log.Printf("error binding JSON: %v", err)
+		c.JSON(400, gin.H{"error": "invalid request"})
+		return
+	}
+
+	userID, err := utils.GetActiveUserID(c)
+	if err != nil {
+		log.Printf("error getting active user ID: %v", err)
+		c.JSON(500, err)
+		return
+	}
+
+	amountDecimal, err := decimal.NewFromString(req.Amount)
+	if err != nil {
+		log.Printf("error converting amount to decimal: %v", err)
+		c.JSON(400, gin.H{"error": err.Error()})
+		return
+	}
+
+	payment, err := s.userService.CreateTokenRedeemRequest(c, userID, amountDecimal, req.PhoneNumber)
+	if err != nil {
+		log.Printf("error creating token redeem request: %v", err)
+		c.JSON(500, gin.H{"error": err.Error()})
+		return
+	}
+	investmentID := sql.NullInt32{Valid: false}
+
+	transaction, err := s.userService.CreateTransaction(c, userID, investmentID, amountDecimal, "withdrawal", payment.Category)
+	if err != nil {
+		log.Printf("error creating transaction: %v", err)
+		c.JSON(500, serverError)
+		return
+	}
+
+	c.JSON(201, transaction)
+}
+
+func (s *userHandler) CreateSavingsWithdrawRequest(c *gin.Context) {
+	var req struct {
+		Amount        string `json:"amount" binding:"required"`
+		BankName      string `json:"bank_name" binding:"required"`
+		AccountName   string `json:"account_name" binding:"required"`
+		AccountNumber string `json:"account_number" binding:"required,min=10"`
+	}
+
+	if err := c.ShouldBindJSON(&req); err != nil {
+		log.Printf("error binding JSON: %v", err.Error())
+		c.JSON(400, gin.H{"error": "invalid request"})
+		return
+	}
+
+	userID, err := utils.GetActiveUserID(c)
+	if err != nil {
+		log.Printf("error getting active user ID: %v", err)
+		c.JSON(500, serverError)
+		return
+	}
+
+	amountDecimal, err := decimal.NewFromString(req.Amount)
+	if err != nil {
+		log.Printf("error converting amount to decimal: %v", err)
+		c.JSON(400, gin.H{"error": "invalid amount format"})
+		return
+	}
+
+	payment, err := s.userService.CreateSavingsWithdrawRequest(c, userID, amountDecimal, req.BankName, req.AccountName, req.AccountNumber)
+	if err != nil {
+		log.Printf("error creating payment request: %v", err)
+		c.JSON(500, serverError)
+		return
+	}
+	investmentID := sql.NullInt32{Valid: false}
+
+	transaction, err := s.userService.CreateTransaction(c, userID, investmentID, amountDecimal, payment.Category, payment.Type)
 	if err != nil {
 		log.Printf("error creating transaction: %v", err)
 		c.JSON(500, serverError)
@@ -118,7 +208,7 @@ func (s *userHandler) CreateInvestmentPaymentRequest(c *gin.Context) {
 		c.JSON(500, serverError)
 		return
 	}
-	transaction, err := s.userService.CreateTransaction(c, userID, sql.NullInt32{Valid: true, Int32: investmentID}, amountDecimal, payment.Type)
+	transaction, err := s.userService.CreateTransaction(c, userID, sql.NullInt32{Valid: true, Int32: investmentID}, amountDecimal, payment.Category, payment.Type)
 	if err != nil {
 		log.Printf("error creating transaction: %v", err)
 		c.JSON(500, serverError)
@@ -127,6 +217,62 @@ func (s *userHandler) CreateInvestmentPaymentRequest(c *gin.Context) {
 
 	c.JSON(201, transaction)
 }
+
+func (s *userHandler) CreateInvestmentWithhdrawRequest(c *gin.Context) {
+	var req struct {
+		RefCode       string `json:"ref_code" binding:"required"`
+		Amount        string `json:"amount" binding:"required"`
+		BankName      string `json:"bank_name" binding:"required"`
+		AccountName   string `json:"account_name" binding:"required"`
+		AccountNumber string `json:"account_number" binding:"required,min=10"`
+	}
+
+	userID, err := utils.GetActiveUserID(c)
+	if err != nil {
+		log.Printf("error getting active user ID: %v", err)
+		c.JSON(500, serverError)
+		return
+	}
+
+	if err := c.ShouldBindJSON(&req); err != nil {
+		log.Printf("error binding JSON: %v", err)
+		c.JSON(400, gin.H{"error": "invalid request"})
+		return
+	}
+
+	// check if refcode for that investment exists
+	iID, err := s.userService.GetInvestmentByRefCode(c, req.RefCode)
+	if err != nil {
+		log.Printf("GetPayoutRequestByRefCode error: %v", err)
+		c.JSON(400, gin.H{"error": "invalid ref_code"})
+		return
+	}
+
+	amountDecimal, err := decimal.NewFromString(req.Amount)
+	if err != nil {
+		log.Printf("error converting amount to decimal: %v", err)
+		c.JSON(400, gin.H{"error": "invalid amount format"})
+		return
+	}
+
+	// Convert uuid.UUID to uuid.NullUUID
+	investmentID := iID.ID
+	payment, err := s.userService.CreateInvestmentWithdrawRequest(c, userID, investmentID, amountDecimal, req.BankName, req.AccountName, req.AccountNumber)
+	if err != nil {
+		log.Printf("error creating payment request: %v", err)
+		c.JSON(500, serverError)
+		return
+	}
+	transaction, err := s.userService.CreateTransaction(c, userID, sql.NullInt32{Valid: true, Int32: investmentID}, amountDecimal, payment.Category, payment.Type)
+	if err != nil {
+		log.Printf("error creating transaction: %v", err)
+		c.JSON(500, serverError)
+		return
+	}
+
+	c.JSON(201, transaction)
+}
+
 func (s *userHandler) ListUserSavingsTransactions(c *gin.Context) {
 	userID, err := utils.GetActiveUserID(c)
 	if err != nil {
@@ -277,22 +423,56 @@ func (s *userHandler) UpdateEmailAndUsername(c *gin.Context) {
 	}
 
 	type UpdateInput struct {
-		Email    string `json:"email" binding:"required,email"`
-		Username string `json:"username" binding:"required"`
+		Email    *string `json:"email" binding:"omitempty,email"`
+		Username *string `json:"username" binding:"omitempty"`
 	}
 	var req UpdateInput
 
 	if err := c.ShouldBindJSON(&req); err != nil {
 		log.Printf("invalid input: %v", err)
-		c.JSON(400, gin.H{"error": "invalid input"})
+		c.JSON(400, gin.H{"error": "invalid input data"})
 		return
 	}
 
-	err = s.userService.UpdateEmailAndUsername(c, req.Email, req.Username, userID)
+	err = s.userService.UpdateEmailOrUsername(c, req.Email, req.Username, userID)
 	if err != nil {
 		log.Printf("error updating user: %v", err)
 		c.JSON(500, gin.H{"error": serverError})
 		return
 	}
 	c.JSON(200, gin.H{"message": "update successful"})
+}
+
+func (s *userHandler) ListUserRefs(c *gin.Context) {
+	userID, err := utils.GetActiveUserID(c)
+	if err != nil {
+		log.Printf("error getting active user ID: %v", err)
+		c.JSON(500, serverError)
+		return
+	}
+
+	refs, err := s.userService.ListUserReferrals(c, userID)
+	if err != nil {
+		log.Printf("error getting user refs: %s", err)
+		c.JSON(500, serverError)
+	}
+
+	c.JSON(200, refs)
+}
+
+func(s *userHandler) GetUserTokens(c *gin.Context) {
+	userID, err := utils.GetActiveUserID(c)
+	if err != nil {
+		log.Printf("error getting active user ID: %v", err)
+		c.JSON(500, serverError)
+		return
+	}
+	
+	tk, err := s.userService.GetUserTokens(c, userID)
+	if err != nil {
+		log.Printf("error getting user tokens: %v", err)
+		c.JSON(500, serverError)
+		return
+	}
+	c.JSON(200, tk)
 }

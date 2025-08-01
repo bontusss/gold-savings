@@ -15,11 +15,19 @@ CREATE TABLE
     password_hash TEXT NOT NULL,
     account_number TEXT,
     bank_name TEXT,
-    token_balance INTEGER DEFAULT 0,
     is_active BOOLEAN DEFAULT TRUE,
     email_verified BOOLEAN NOT NULL DEFAULT FALSE,
     verification_code TEXT,
     verification_expires_at TIMESTAMP,
     created_at TIMESTAMP DEFAULT NOW (),
     updated_at TIMESTAMP DEFAULT NOW ()
+  );
+
+  CREATE TABLE referrals (
+    id SERIAL PRIMARY KEY,
+    inviter_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    invitee_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    created_at TIMESTAMP DEFAULT now(),
+    
+    UNIQUE (invitee_id) -- Prevents duplicate referral entries
   );

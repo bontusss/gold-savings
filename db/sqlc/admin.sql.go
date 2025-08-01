@@ -35,9 +35,9 @@ func (q *Queries) CreateAdmin(ctx context.Context, arg CreateAdminParams) (Creat
 }
 
 const createInvestmentPlan = `-- name: CreateInvestmentPlan :one
-INSERT INTO investment_plans (name, interest_rate, min_amount, max_amount)
-VALUES ($1, $2, $3, $4)
-RETURNING id, name, interest_rate, min_amount, max_amount, created_at, updated_at
+INSERT INTO investment_plans (name, interest_rate, min_amount, max_amount, description)
+VALUES ($1, $2, $3, $4, $5)
+RETURNING id, name, interest_rate, description, min_amount, max_amount, created_at, updated_at
 `
 
 type CreateInvestmentPlanParams struct {
@@ -45,6 +45,7 @@ type CreateInvestmentPlanParams struct {
 	InterestRate string `json:"interest_rate"`
 	MinAmount    string `json:"min_amount"`
 	MaxAmount    string `json:"max_amount"`
+	Description  string `json:"description"`
 }
 
 func (q *Queries) CreateInvestmentPlan(ctx context.Context, arg CreateInvestmentPlanParams) (InvestmentPlan, error) {
@@ -53,12 +54,14 @@ func (q *Queries) CreateInvestmentPlan(ctx context.Context, arg CreateInvestment
 		arg.InterestRate,
 		arg.MinAmount,
 		arg.MaxAmount,
+		arg.Description,
 	)
 	var i InvestmentPlan
 	err := row.Scan(
 		&i.ID,
 		&i.Name,
 		&i.InterestRate,
+		&i.Description,
 		&i.MinAmount,
 		&i.MaxAmount,
 		&i.CreatedAt,
@@ -96,7 +99,7 @@ func (q *Queries) GetAdminByEmail(ctx context.Context, email string) (Admin, err
 }
 
 const getAllInvestmentPlans = `-- name: GetAllInvestmentPlans :many
-SELECT id, name, interest_rate, min_amount, max_amount, created_at, updated_at FROM investment_plans
+SELECT id, name, interest_rate, description, min_amount, max_amount, created_at, updated_at FROM investment_plans
 `
 
 func (q *Queries) GetAllInvestmentPlans(ctx context.Context) ([]InvestmentPlan, error) {
@@ -112,6 +115,7 @@ func (q *Queries) GetAllInvestmentPlans(ctx context.Context) ([]InvestmentPlan, 
 			&i.ID,
 			&i.Name,
 			&i.InterestRate,
+			&i.Description,
 			&i.MinAmount,
 			&i.MaxAmount,
 			&i.CreatedAt,
@@ -131,7 +135,7 @@ func (q *Queries) GetAllInvestmentPlans(ctx context.Context) ([]InvestmentPlan, 
 }
 
 const getInvestmentPlanByID = `-- name: GetInvestmentPlanByID :one
-SELECT id, name, interest_rate, min_amount, max_amount, created_at, updated_at FROM investment_plans WHERE id = $1
+SELECT id, name, interest_rate, description, min_amount, max_amount, created_at, updated_at FROM investment_plans WHERE id = $1
 `
 
 func (q *Queries) GetInvestmentPlanByID(ctx context.Context, id int32) (InvestmentPlan, error) {
@@ -141,6 +145,7 @@ func (q *Queries) GetInvestmentPlanByID(ctx context.Context, id int32) (Investme
 		&i.ID,
 		&i.Name,
 		&i.InterestRate,
+		&i.Description,
 		&i.MinAmount,
 		&i.MaxAmount,
 		&i.CreatedAt,
