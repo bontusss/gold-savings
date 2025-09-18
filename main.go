@@ -79,6 +79,14 @@ func main() {
 		}
 	})
 
+	router.GET("/privacy", func(ctx *gin.Context) {
+		err := components.Privacy().Render(ctx, ctx.Writer)
+		if err != nil {
+			ctx.String(404, "privacy page not found")
+			return
+		}
+	})
+
 	// Initialize API routes
 	api.SetupRoutes(router.Group("/api"), authService, queries, c, userService)
 
